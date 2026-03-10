@@ -21,24 +21,24 @@ function App() {
               //   <Left />
               //   <Right />
               // </div>
-              <div className="drawer lg:drawer-open">
+              <div className="drawer lg:drawer-open h-screen w-full overflow-hidden text-base-content bg-base-100">
                 <input
                   id="my-drawer-2"
                   type="checkbox"
                   className="drawer-toggle"
                 />
-                <div className="drawer-content flex flex-col items-center justify-center">
+                <div className="drawer-content flex flex-col h-full overflow-hidden relative">
                   <Right />
                 </div>
-                <div className="drawer-side">
+                <div className="drawer-side z-50">
                   <label
                     htmlFor="my-drawer-2"
                     aria-label="close sidebar"
                     className="drawer-overlay"
                   ></label>
-                  <ul className="menu w-80 min-h-full bg-black text-base-content">
+                  <div className="w-80 md:w-[350px] h-full bg-base-100 flex flex-col overflow-hidden">
                     <Left />
-                  </ul>
+                  </div>
                 </div>
               </div>
             ) : (

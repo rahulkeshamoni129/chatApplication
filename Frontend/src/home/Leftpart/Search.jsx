@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 function Search() {
   const [search, setSearch] = useState("");
   const [allUsers] = userGetAllUsers();
-  const { setSelectedConversation } = useConversation();
+  const { setSelectedConversation, clearUnreads } = useConversation();
   console.log(allUsers);
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,28 +16,29 @@ function Search() {
     );
     if (conversation) {
       setSelectedConversation(conversation);
+      clearUnreads(conversation._id);
       setSearch("");
-    } 
+    }
     else {
       toast.error("User not found");
     }
   };
   return (
-    <div className=" h-[10vh]">
-      <div className="px-6 py-4">
-        <form onSubmit={handleSubmit}>
-          <div className="flex space-x-3">
-            <label className=" border-[1px] border-gray-700 bg-slate-900 rounded-lg p-3 flex items-center gap-2 w-[80%]">
+    <div className="h-[10vh] border-b border-base-200 w-full flex items-center bg-base-100">
+      <div className="px-6 w-full mt-2">
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="flex space-x-3 w-full items-center">
+            <label className="input input-bordered input-sm rounded-full flex items-center gap-2 w-full bg-base-200 border-none shadow-inner focus-within:shadow-none focus-within:bg-base-100 focus-within:ring-1 focus-within:ring-primary transition-all">
               <input
                 type="text"
-                className="grow outline-none bg-transparent"
-                placeholder="Search"
+                className="grow text-sm"
+                placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </label>
-            <button>
-              <FaSearch className="text-5xl p-2 hover:bg-gray-600 rounded-full duration-300" />
+            <button type="submit" className="btn btn-circle btn-sm btn-ghost hover:bg-base-200">
+              <FaSearch className="text-base-content/70" />
             </button>
           </div>
         </form>

@@ -5,30 +5,29 @@ import Typesend from "./Typesend";
 import useConversation from "../../zustand/useConversation.js";
 import { useAuth } from "../../context/Authprovider.jsx";
 import { CiMenuFries } from "react-icons/ci";
+import useGetSocketMessage from "../../context/useGetSocketMessage.js";
 
 function Right() {
   const { selectedConversation, setSelectedConversation } = useConversation();
+  useGetSocketMessage();
   useEffect(() => {
     return setSelectedConversation(null);
   }, [setSelectedConversation]);
   return (
-    <div className="w-full bg-slate-900 text-gray-300">
-      <div>
-        {!selectedConversation ? (
-          <NoChatSelected />
-        ) : (
-          <>
-            <Chatuser />
-            <div
-              className=" hide-scroll overflow-y-auto"
-              style={{ maxHeight: "calc(92vh - 8vh)" }}
-            >
-              <Messages />
-            </div>
-            <Typesend />
-          </>
-        )}
-      </div>
+    <div className="w-full h-full bg-base-100 text-base-content relative flex flex-col">
+      {!selectedConversation ? (
+        <NoChatSelected />
+      ) : (
+        <>
+          <Chatuser />
+          <div
+            className="flex-1 hide-scroll overflow-y-auto px-4 py-2"
+          >
+            <Messages />
+          </div>
+          <Typesend />
+        </>
+      )}
     </div>
   );
 }
@@ -47,7 +46,7 @@ const NoChatSelected = () => {
         >
           <CiMenuFries className="text-white text-xl" />
         </label>
-        <div className="flex h-screen items-center justify-center">
+        <div className="flex h-full w-full items-center justify-center">
           <h1 className="text-center">
             Welcome{" "}
             <span className="font-semibold text-xl">
