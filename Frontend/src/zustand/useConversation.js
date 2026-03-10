@@ -25,6 +25,16 @@ const useConversation = create((set) => ({
   setEditingMessage: (editingMessage) => set({ editingMessage }),
 
   replyingTo: null,
-  setReplyingTo: (replyingTo) => set({ replyingTo })
+  setReplyingTo: (replyingTo) => set({ replyingTo }),
+
+  pinnedChats: [],
+  setPinnedChats: (pinnedChats) => set({ pinnedChats }),
+  togglePin: (userId) => set((state) => {
+    const isPinned = state.pinnedChats.includes(userId);
+    const newPinned = isPinned
+      ? state.pinnedChats.filter(id => id !== userId)
+      : [...state.pinnedChats, userId];
+    return { pinnedChats: newPinned };
+  })
 }))
 export default useConversation

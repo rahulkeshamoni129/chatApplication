@@ -1,6 +1,7 @@
 import { Server } from "socket.io"
 import http from "http"
 import express from "express"
+import Conversation from "../models/conversation.model.js"
 
 
 
@@ -36,17 +37,41 @@ io.on("connection", (socket) => {
     })
 
     // Typing Indicators
-    socket.on("typing", ({ senderId, receiverId }) => {
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("userTyping", { senderId });
+    socket.on("typing", async ({ senderId, receiverId, isGroup }) => {
+        if (isGroup) {
+            const conversation = await Conversation.findById(receiverId);
+            if (conversation) {
+                conversation.members.forEach(memberId => {
+                    if (memberId.toString() !== senderId.toString()) {
+                        const socketId = getReceiverSocketId(memberId);
+                        if (socketId) io.to(socketId).emit("userTyping", { senderId, receiverId });
+                    }
+                });
+            }
+        } else {
+            const receiverSocketId = getReceiverSocketId(receiverId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("userTyping", { senderId });
+            }
         }
     });
 
-    socket.on("stopTyping", ({ senderId, receiverId }) => {
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("userStopTyping", { senderId });
+    socket.on("stopTyping", async ({ senderId, receiverId, isGroup }) => {
+        if (isGroup) {
+            const conversation = await Conversation.findById(receiverId);
+            if (conversation) {
+                conversation.members.forEach(memberId => {
+                    if (memberId.toString() !== senderId.toString()) {
+                        const socketId = getReceiverSocketId(memberId);
+                        if (socketId) io.to(socketId).emit("userStopTyping", { senderId, receiverId });
+                    }
+                });
+            }
+        } else {
+            const receiverSocketId = getReceiverSocketId(receiverId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("userStopTyping", { senderId });
+            }
         }
     });
 })

@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import Conversation from "../models/conversation.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
 export const signup = async (req, res) => {
@@ -29,11 +30,11 @@ export const signup = async (req, res) => {
                 user: {
                     _id: newUser._id,
                     fullname: newUser.fullname,
-                    email: newUser.email
+                    email: newUser.email,
+                    bio: newUser.bio,
+                    pinnedChats: newUser.pinnedChats
                 }
-            }
-            )
-
+            })
         }
     } catch (error) {
         console.log(error);
@@ -44,17 +45,22 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await User.findOne({ email });
-        const isMatch = await bcrypt.compare(password, user.password);//matching database password with the gvien password
-        if (!user || !isMatch) {
+        if (!user) {
             return res.status(400).json({ error: "Invalid credential" });
         }
+        if (user.isBlocked) {
+            return res.status(403).json({ error: "Your account has been blocked by admin" });
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
         //if user found generate a token so that user can acces the website
         createTokenAndSaveCookie(user._id, res);
-        res.status(201).json({
+        res.status(200).json({
             message: "User Logged in Succesfully", user: {
                 _id: user._id,
                 fullname: user.fullname,
-                email: user.email
+                email: user.email,
+                bio: user.bio,
+                pinnedChats: user.pinnedChats
             }
         });
 
@@ -157,6 +163,91 @@ export const changePassword = async (req, res) => {
 
     } catch (error) {
         console.log("Error in change password: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const togglePinChat = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { contactId } = req.body;
+        const user = await User.findById(userId);
+
+        if (!user.pinnedChats) user.pinnedChats = [];
+
+        const index = user.pinnedChats.indexOf(contactId);
+        if (index === -1) {
+            user.pinnedChats.push(contactId);
+        } else {
+            user.pinnedChats.splice(index, 1);
+        }
+        await user.save();
+        res.status(200).json({ message: "Pinned chats updated", pinnedChats: user.pinnedChats });
+    } catch (error) {
+        console.log("Error in togglePinChat: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const createGroup = async (req, res) => {
+    try {
+        const { groupName, members } = req.body;
+        const loggedInUser = req.user._id;
+
+        if (!members || members.length < 2) {
+            return res.status(400).json({ error: "At least 2 members are required to create a group" });
+        }
+
+        // Add admin to members if not already there
+        const allMembers = [...new Set([...members, loggedInUser.toString()])];
+
+        const newGroup = await Conversation.create({
+            groupName,
+            members: allMembers,
+            isGroup: true,
+            groupAdmin: loggedInUser
+        });
+
+        res.status(201).json(newGroup);
+    } catch (error) {
+        console.log("Error in createGroup: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const allGroups = async (req, res) => {
+    try {
+        const loggedInUser = req.user._id;
+        const groups = await Conversation.find({
+            members: loggedInUser,
+            isGroup: true
+        }).sort({ updatedAt: -1 });
+
+        res.status(200).json(groups);
+    } catch (error) {
+        console.log("Error in allGroups: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const toggleBlockUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const loggedInUser = req.user;
+
+        if (!loggedInUser.isAdmin) {
+            return res.status(403).json({ error: "Only admins can perform this action" });
+        }
+
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        user.isBlocked = !user.isBlocked;
+        await user.save();
+
+        res.status(200).json({ message: `User ${user.isBlocked ? 'blocked' : 'unblocked'} successfully`, isBlocked: user.isBlocked });
+    } catch (error) {
+        console.log("Error in toggleBlockUser: ", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

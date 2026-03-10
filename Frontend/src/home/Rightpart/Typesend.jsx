@@ -42,18 +42,30 @@ function Typesend() {
     setMessage("")
     setShowEmoji(false)
     if (socket) {
-      socket.emit("stopTyping", { senderId: authUser.user._id, receiverId: selectedConversation._id })
+      socket.emit("stopTyping", {
+        senderId: authUser.user._id,
+        receiverId: selectedConversation._id,
+        isGroup: !!selectedConversation.isGroup
+      })
     }
   };
 
   const handleOnChange = (e) => {
     setMessage(e.target.value)
     if (socket && selectedConversation) {
-      socket.emit("typing", { senderId: authUser.user._id, receiverId: selectedConversation._id })
+      socket.emit("typing", {
+        senderId: authUser.user._id,
+        receiverId: selectedConversation._id,
+        isGroup: !!selectedConversation.isGroup
+      })
 
       if (window.typingTimeout) clearTimeout(window.typingTimeout)
       window.typingTimeout = setTimeout(() => {
-        socket.emit("stopTyping", { senderId: authUser.user._id, receiverId: selectedConversation._id })
+        socket.emit("stopTyping", {
+          senderId: authUser.user._id,
+          receiverId: selectedConversation._id,
+          isGroup: !!selectedConversation.isGroup
+        })
       }, 2000)
     }
   }

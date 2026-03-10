@@ -10,13 +10,15 @@ function Chatuser() {
 
   useEffect(() => {
     if (socket) {
-      socket.on("userTyping", ({ senderId }) => {
-        if (selectedConversation && senderId === selectedConversation._id) {
+      socket.on("userTyping", ({ senderId, receiverId }) => {
+        if (selectedConversation &&
+          (senderId === selectedConversation._id || (selectedConversation.isGroup && receiverId === selectedConversation._id))) {
           setTyping(true);
         }
       });
-      socket.on("userStopTyping", ({ senderId }) => {
-        if (selectedConversation && senderId === selectedConversation._id) {
+      socket.on("userStopTyping", ({ senderId, receiverId }) => {
+        if (selectedConversation &&
+          (senderId === selectedConversation._id || (selectedConversation.isGroup && receiverId === selectedConversation._id))) {
           setTyping(false);
         }
       });
@@ -50,18 +52,25 @@ function Chatuser() {
 
       {/* Center: Avatar and user info */}
       <div className="flex items-center gap-4">
-        <div className={`avatar ${getOnlineUsersStatus(selectedConversation._id) === "online" ? "avatar-online" : ""}`}>
+        <div className={`avatar ${!selectedConversation.isGroup && getOnlineUsersStatus(selectedConversation._id) === "online" ? "avatar-online" : ""}`}>
           <div className="w-12 rounded-full border border-primary">
-            <img src="https://img.daisyui.com/images/profile/demo/gordon@192.webp" />
+            <img
+              src={selectedConversation.isGroup
+                ? `https://api.dicebear.com/7.x/shapes/svg?seed=${selectedConversation.fullname}`
+                : `https://api.dicebear.com/7.x/initials/svg?seed=${selectedConversation.fullname}`}
+              alt="avatar"
+            />
           </div>
         </div>
         <div className="text-left flex flex-col justify-center">
           <h1 className="text-base font-semibold">{selectedConversation.fullname}</h1>
           <span className="text-xs text-base-content opacity-70">
             {typing ? (
-              <span className="text-primary font-medium animate-pulse">typing...</span>
+              <span className="text-primary font-medium animate-pulse">
+                {selectedConversation.isGroup ? "Someone is typing..." : "typing..."}
+              </span>
             ) : (
-              getOnlineUsersStatus(selectedConversation._id)
+              selectedConversation.isGroup ? `${selectedConversation.members.length} members` : getOnlineUsersStatus(selectedConversation._id)
             )}
           </span>
         </div>

@@ -23,6 +23,14 @@ const userSchema = mongoose.Schema({
     isBlocked: {
         type: Boolean,
         default: false
+    },
+    pinnedChats: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    isAdmin: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true })//createdAt when the user is created & updatedAt when latest updated like password
 

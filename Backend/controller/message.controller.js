@@ -1,4 +1,4 @@
-import { response } from "express";
+import User from "../models/user.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import getReceiverSocketId from "../SockedIo/server.js"
@@ -6,33 +6,43 @@ import { io } from "../SockedIo/server.js"
 
 
 export const sendMessage = async (req, res) => {
-    //console.log("Message sent",req.params.id,req.body.message);
     try {
         const { message, replyTo } = req.body;
-        const { id: receiverId } = req.params;//to whom we are sending the message
-        const senderId = req.user._id;//currently logged in user
+        const { id: targetId } = req.params; // User ID or Group ID
+        const senderId = req.user._id;
+
         let conversation = await Conversation.findOne({
-            members: { $all: [senderId, receiverId] }
-        })
+            $or: [
+                { _id: targetId },
+                { members: { $all: [senderId, targetId] }, isGroup: false }
+            ]
+        });
+
         if (!conversation) {
-            conversation = await Conversation.create({
-                members: [senderId, receiverId]
-            });
+            // Only create if it's a user-to-user chat
+            const isUser = await User.exists({ _id: targetId });
+            if (isUser) {
+                conversation = await Conversation.create({
+                    members: [senderId, targetId]
+                });
+            } else {
+                return res.status(404).json({ error: "Conversation not found" });
+            }
         }
+
         const newMessage = new Message({
             senderId,
-            receiverId,
+            receiverId: targetId,
             message,
             replyTo: replyTo || null
-        })
+        });
+
         if (newMessage) {
             conversation.messages.push(newMessage._id);
         }
-        await Promise.all(
-            [conversation.save(), newMessage.save()]
-        );
 
-        // Populate replyTo for socket emit and response
+        await Promise.all([conversation.save(), newMessage.save()]);
+
         if (replyTo) {
             await newMessage.populate({
                 path: 'replyTo',
@@ -40,12 +50,18 @@ export const sendMessage = async (req, res) => {
             });
         }
 
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage)
-        }
+        // Socket broadcast
+        conversation.members.forEach(memberId => {
+            if (memberId.toString() !== senderId.toString()) {
+                const receiverSocketId = getReceiverSocketId(memberId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit("newMessage", newMessage);
+                }
+            }
+        });
+
         res.status(201).json({
-            message: "Message send successfully",
+            message: "Message sent successfully",
             newMessage
         });
     } catch (error) {
@@ -59,7 +75,10 @@ export const getMessage = async (req, res) => {
         const { id: chatUser } = req.params;
         const senderId = req.user._id;
         let conversation = await Conversation.findOne({
-            members: { $all: [senderId, chatUser] }
+            $or: [
+                { _id: chatUser },
+                { members: { $all: [senderId, chatUser] }, isGroup: false }
+            ]
         }).populate({
             path: 'messages',
             populate: {
@@ -68,10 +87,10 @@ export const getMessage = async (req, res) => {
             }
         });
         if (!conversation) {
-            return res.status(201).json([]);//returning empty becoz they did not chat till data
+            return res.status(200).json([]);
         }
         const messages = conversation.messages;
-        res.status(201).json(messages);
+        res.status(200).json(messages);
 
     } catch (error) {
         console.log("Error in get Message", error);
@@ -82,12 +101,14 @@ export const getMessage = async (req, res) => {
 export const deleteMessage = async (req, res) => {
     try {
         const { id } = req.params;
-        const senderId = req.user._id;
+        const loggedInUser = req.user;
         const message = await Message.findById(id);
         if (!message) {
             return res.status(404).json({ error: "Message not found" });
         }
-        if (message.senderId.toString() !== senderId.toString()) {
+
+        // Allow if sender or admin
+        if (message.senderId.toString() !== loggedInUser._id.toString() && !loggedInUser.isAdmin) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
@@ -202,6 +223,28 @@ export const searchMessages = async (req, res) => {
         res.status(200).json(messages);
     } catch (error) {
         console.log("Error in searchMessages: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const toggleStarMessage = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { id } = req.params;
+        const message = await Message.findById(id);
+
+        if (!message) return res.status(404).json({ error: "Message not found" });
+
+        const index = message.starredBy.indexOf(userId);
+        if (index === -1) {
+            message.starredBy.push(userId);
+        } else {
+            message.starredBy.splice(index, 1);
+        }
+        await message.save();
+        res.status(200).json({ message: "Message star status updated", starredBy: message.starredBy });
+    } catch (error) {
+        console.log("Error in toggleStarMessage: ", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

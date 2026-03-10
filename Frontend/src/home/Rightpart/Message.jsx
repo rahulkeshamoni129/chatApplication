@@ -1,14 +1,18 @@
 import React from 'react'
-import { FaTrash, FaReply, FaPencilAlt } from 'react-icons/fa'
+import { FaTrash, FaReply, FaPencilAlt, FaStar, FaRegStar } from 'react-icons/fa'
 import { IoCheckmarkDoneOutline, IoCheckmarkOutline } from 'react-icons/io5'
+import axios from 'axios'
+import toast from 'react-hot-toast'
 import useDeleteMessage from '../../context/useDeleteMessage.js'
 import useConversation from '../../zustand/useConversation.js'
 
 function Message({ message }) {
   const authUser = JSON.parse(localStorage.getItem('chatApp'))
-  const { setEditingMessage, setReplyingTo } = useConversation();
+  const { setEditingMessage, setReplyingTo, updateMessage } = useConversation();
   const itsMe = message.senderId === authUser.user._id;
+  const isAdmin = authUser.user.isAdmin;
   const { deleteMessage } = useDeleteMessage();
+  const isStarred = message.starredBy?.includes(authUser.user._id);
 
   const chatName = itsMe ? "chat-end" : "chat-start"
   const chatColor = itsMe ? "bg-primary text-primary-content" : "bg-base-200 text-base-content border border-base-300"
@@ -26,6 +30,17 @@ function Message({ message }) {
 
   const isEditable = itsMe && (new Date() - new Date(message.createdAt)) < 5 * 60 * 1000;
 
+  const handleToggleStar = async () => {
+    try {
+      const res = await axios.put(`/api/message/star/${message._id}`);
+      updateMessage({ ...message, starredBy: res.data.starredBy });
+      toast.success(isStarred ? "Message unstarred" : "Message starred");
+    } catch (error) {
+      console.log("Error starring message:", error);
+      toast.error("Failed to update star status");
+    }
+  }
+
   return (
     <div>
       <div className='group'>
@@ -39,21 +54,33 @@ function Message({ message }) {
                 <p className="truncate italic">"{message.replyTo.message}"</p>
               </div>
             )}
-            <div>
+            <div className="pr-4">
               {message.message}
               {message.edited && (
                 <span className="text-[10px] opacity-70 ml-2 italic">(edited)</span>
               )}
             </div>
 
-            {/* Actions: Edit, Delete, Reply */}
-            <div className={`absolute top-1/2 transform -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${itsMe ? '-left-20' : '-right-12'}`}>
+            {isStarred && (
+              <FaStar className="absolute top-2 right-2 text-warning text-[10px]" />
+            )}
+
+            {/* Actions: Edit, Delete, Reply, Star */}
+            <div className={`absolute top-1/2 transform -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${itsMe ? '-left-24' : '-right-16'}`}>
               <button
                 onClick={() => setReplyingTo(message)}
                 className="hover:text-primary p-1"
                 title="Reply"
               >
                 <FaReply size={12} />
+              </button>
+
+              <button
+                onClick={handleToggleStar}
+                className="hover:text-warning p-1"
+                title={isStarred ? "Unstar" : "Star"}
+              >
+                {isStarred ? <FaStar size={12} /> : <FaRegStar size={12} />}
               </button>
 
               {isEditable && (
@@ -66,11 +93,11 @@ function Message({ message }) {
                 </button>
               )}
 
-              {itsMe && (
+              {(itsMe || isAdmin) && (
                 <button
                   onClick={() => deleteMessage(message._id)}
                   className="hover:text-error p-1"
-                  title="Unsend Message"
+                  title={isAdmin && !itsMe ? "Admin: Delete Message" : "Unsend Message"}
                 >
                   <FaTrash size={12} />
                 </button>

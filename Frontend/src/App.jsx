@@ -7,8 +7,19 @@ import { useAuth } from "./context/Authprovider";
 import { Toaster } from "react-hot-toast";
 
 import { Navigate, Route, Routes } from "react-router-dom";
+import useConversation from "./zustand/useConversation";
+import { useEffect } from "react";
+
 function App() {
   const [authUser, setAuthUser] = useAuth();
+  const { setPinnedChats } = useConversation();
+
+  useEffect(() => {
+    if (authUser?.user?.pinnedChats) {
+      setPinnedChats(authUser.user.pinnedChats);
+    }
+  }, [authUser, setPinnedChats]);
+
   console.log(authUser);
   return (
     <>
