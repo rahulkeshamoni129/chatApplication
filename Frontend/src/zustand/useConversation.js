@@ -4,7 +4,10 @@ const useConversation = create((set) => ({
   selectedConversation: null,
   setSelectedConversation: (selectedConversation) => set({ selectedConversation }),
   messages: [],
-  setMessage: (messages) => set({ messages }),
+  // Supports both direct value and functional updater: setMessage(msgs) or setMessage(prev => [...prev, newMsg])
+  setMessage: (updater) => set((state) => ({
+    messages: typeof updater === 'function' ? updater(state.messages) : updater
+  })),
 
   unreads: {},
   setUnreads: (unreads) => set({ unreads }),
