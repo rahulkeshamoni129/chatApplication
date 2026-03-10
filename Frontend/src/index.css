@@ -1,7 +1,78 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities; 
-   
+
+@layer base {
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+  }
+}
+
 .hide-scroll::-webkit-scrollbar {
   display: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--bc) / 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--p));
+}
+
+/* Glassmorphism */
+.glass-effect {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Premium Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+.animate-slide-in { animation: slideInUp 0.3s ease-out; }
+.animate-zoom-in { animation: zoomIn 0.2s ease-out; }
+
+/* Message Selection Glow */
+.message-glow {
+  box-shadow: 0 0 15px hsl(var(--p) / 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Shimmer Effect for Loading */
+.shimmer {
+  background: linear-gradient(90deg, transparent, hsl(var(--bc) / 0.05), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }

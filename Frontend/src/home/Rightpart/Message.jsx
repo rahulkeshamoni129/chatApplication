@@ -1,15 +1,18 @@
-import React from 'react'
-import { FaTrash, FaReply, FaPencilAlt, FaStar, FaRegStar } from 'react-icons/fa'
-import { IoCheckmarkDoneOutline, IoCheckmarkOutline } from 'react-icons/io5'
+import React, { useState } from 'react'
+import { FaTrash, FaReply, FaPencilAlt, FaStar, FaRegStar, FaShare } from 'react-icons/fa'
+import { IoCheckmarkDoneOutline, IoCheckmarkOutline, IoEyeOutline } from 'react-icons/io5'
 import { MdOutlineAddReaction } from "react-icons/md";
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import useDeleteMessage from '../../context/useDeleteMessage.js'
 import useConversation from '../../zustand/useConversation.js'
+import ForwardModal from '../../components/ForwardModal'
 
 function Message({ message }) {
   const authUser = JSON.parse(localStorage.getItem('chatApp'))
-  const { setEditingMessage, setReplyingTo, updateMessage } = useConversation();
+  const { setEditingMessage, setReplyingTo, updateMessage, selectedConversation } = useConversation();
+  const [showForward, setShowForward] = useState(false);
+  const [showSeenBy, setShowSeenBy] = useState(false);
   const itsMe = message.senderId === authUser.user._id;
   const isAdmin = authUser.user.isAdmin;
   const { deleteMessage } = useDeleteMessage();
@@ -107,6 +110,10 @@ function Message({ message }) {
                   <FaReply size={12} />
                 </button>
 
+                <button onClick={() => setShowForward(true)} className="hover:text-primary p-1" title="Forward">
+                  <FaShare size={12} />
+                </button>
+
                 <button onClick={handleToggleStar} className="hover:text-warning p-1" title={isStarred ? "Unstar" : "Star"}>
                   {isStarred ? <FaStar size={12} /> : <FaRegStar size={12} />}
                 </button>
@@ -144,17 +151,44 @@ function Message({ message }) {
           <div className={`chat-footer opacity-50 text-[10px] mt-1 font-medium flex items-center gap-1 ${itsMe ? 'justify-end' : 'justify-start'}`}>
             {formattedDate} {formattedTime}
             {itsMe && (
-              <span>
-                {message.seen ? (
-                  <IoCheckmarkDoneOutline className="text-blue-500 text-sm" />
+              <div className="flex items-center gap-0.5">
+                {selectedConversation?.isGroup ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowSeenBy(!showSeenBy)}
+                      className="flex items-center hover:text-blue-500 transition-colors"
+                    >
+                      {message.seenBy?.length > 0 ? (
+                        <span className="flex items-center gap-0.5 text-blue-500">
+                          <IoCheckmarkDoneOutline size={14} />
+                          <span>{message.seenBy.length}</span>
+                        </span>
+                      ) : (
+                        <IoCheckmarkOutline size={14} />
+                      )}
+                    </button>
+                    {showSeenBy && message.seenBy?.length > 0 && (
+                      <div className="absolute bottom-full right-0 mb-2 w-32 bg-base-200 border border-base-300 rounded-lg shadow-xl p-2 z-50 animate-in slide-in-from-bottom-1">
+                        <p className="font-bold text-[8px] uppercase opacity-50 mb-1">Seen by:</p>
+                        {message.seenBy.map((s, idx) => (
+                          <p key={idx} className="text-[9px] truncate">{s.userId?.fullname || "Unknown"}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <IoCheckmarkOutline className="text-sm" />
+                  message.seen ? (
+                    <IoCheckmarkDoneOutline className="text-blue-500 text-sm" />
+                  ) : (
+                    <IoCheckmarkOutline className="text-sm" />
+                  )
                 )}
-              </span>
+              </div>
             )}
           </div>
         </div>
       </div>
+      {showForward && <ForwardModal message={message} onClose={() => setShowForward(false)} />}
     </div>
   )
 }

@@ -97,10 +97,16 @@ export const getMessage = async (req, res) => {
             ]
         }).populate({
             path: 'messages',
-            populate: {
-                path: 'replyTo',
-                select: 'message senderId'
-            }
+            populate: [
+                {
+                    path: 'replyTo',
+                    select: 'message senderId'
+                },
+                {
+                    path: 'seenBy.userId',
+                    select: 'fullname'
+                }
+            ]
         });
         if (!conversation) {
             return res.status(200).json([]);
@@ -149,27 +155,63 @@ export const deleteMessage = async (req, res) => {
 
 export const markMessagesAsSeen = async (req, res) => {
     try {
-        const { id: chatUser } = req.params;
-        const senderId = req.user._id;
+        const { id: chatId } = req.params;
+        const loggedInUserId = req.user._id;
 
-        const unseenMessages = await Message.find({
-            senderId: chatUser,
-            receiverId: senderId,
-            seen: false
-        });
+        // Check if it's a group
+        const conversation = await Conversation.findById(chatId);
+        const isGroup = conversation?.isGroup || false;
 
-        if (unseenMessages.length > 0) {
-            await Message.updateMany(
-                { senderId: chatUser, receiverId: senderId, seen: false },
-                { $set: { seen: true } }
-            );
+        if (isGroup) {
+            const unseenMessages = await Message.find({
+                receiverId: chatId,
+                senderId: { $ne: loggedInUserId },
+                'seenBy.userId': { $ne: loggedInUserId }
+            });
 
-            // Notify the sender that their messages were read
-            const receiverSocketId = getReceiverSocketId(chatUser);
-            if (receiverSocketId) {
-                io.to(receiverSocketId).emit("messagesSeen", {
-                    seenMessages: unseenMessages.map(msg => msg._id)
+            if (unseenMessages.length > 0) {
+                await Message.updateMany(
+                    { _id: { $in: unseenMessages.map(m => m._id) } },
+                    { $push: { seenBy: { userId: loggedInUserId } } }
+                );
+
+                // Broadcast update to group members
+                conversation.members.forEach(memberId => {
+                    if (memberId.toString() !== loggedInUserId.toString()) {
+                        const socketId = getReceiverSocketId(memberId);
+                        if (socketId) {
+                            io.to(socketId).emit("groupMessagesSeen", {
+                                chatId,
+                                userId: loggedInUserId,
+                                messageIds: unseenMessages.map(m => m._id)
+                            });
+                        }
+                    }
                 });
+            }
+        } else {
+            // 1-to-1 Chat
+            const unseenMessages = await Message.find({
+                senderId: chatId,
+                receiverId: loggedInUserId,
+                seen: false
+            });
+
+            if (unseenMessages.length > 0) {
+                await Message.updateMany(
+                    { senderId: chatId, receiverId: loggedInUserId, seen: false },
+                    {
+                        $set: { seen: true },
+                        $push: { seenBy: { userId: loggedInUserId } }
+                    }
+                );
+
+                const receiverSocketId = getReceiverSocketId(chatId);
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit("messagesSeen", {
+                        seenMessages: unseenMessages.map(msg => msg._id)
+                    });
+                }
             }
         }
         res.status(200).json({ message: "Messages marked as seen" });
@@ -305,6 +347,63 @@ export const toggleReaction = async (req, res) => {
         res.status(200).json({ message: "Reaction updated", reactions: message.reactions });
     } catch (error) {
         console.log("Error in toggleReaction: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const forwardMessage = async (req, res) => {
+    try {
+        const { messageId, targetIds } = req.body; // targetIds is an array of IDs
+        const senderId = req.user._id;
+
+        const originalMsg = await Message.findById(messageId);
+        if (!originalMsg) return res.status(404).json({ error: "Original message not found" });
+
+        const forwardedResults = [];
+
+        for (const targetId of targetIds) {
+            let conversation = await Conversation.findOne({
+                $or: [
+                    { _id: targetId },
+                    { members: { $all: [senderId, targetId] }, isGroup: false }
+                ]
+            });
+
+            if (!conversation) {
+                const targetUser = await User.findById(targetId);
+                if (targetUser) {
+                    conversation = await Conversation.create({ members: [senderId, targetId] });
+                } else continue;
+            }
+
+            const newMessage = new Message({
+                senderId,
+                receiverId: targetId,
+                message: originalMsg.message,
+            });
+
+            conversation.messages.push(newMessage._id);
+            await Promise.all([conversation.save(), newMessage.save()]);
+
+            // Broadcast
+            const isGroup = conversation.isGroup;
+            if (isGroup) {
+                conversation.members.forEach(memberId => {
+                    const socketId = getReceiverSocketId(memberId);
+                    if (socketId) io.to(socketId).emit("newMessage", newMessage);
+                });
+            } else {
+                const socketId = getReceiverSocketId(targetId);
+                const senderSocketId = getReceiverSocketId(senderId);
+                if (socketId) io.to(socketId).emit("newMessage", newMessage);
+                if (senderSocketId) io.to(senderSocketId).emit("newMessage", newMessage);
+            }
+            forwardedResults.push(newMessage);
+        }
+
+        res.status(200).json({ message: "Message forwarded successfully", forwardedResults });
+    } catch (error) {
+        console.log("Error in forwardMessage", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

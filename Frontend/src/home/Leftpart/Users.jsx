@@ -42,7 +42,7 @@ function Users() {
 
       {showCreateGroup && <CreateGroup onClose={() => setShowCreateGroup(false)} />}
 
-      <div className="flex flex-col gap-1 pb-4">
+      <div className="flex flex-col gap-1 pb-4 animate-fade-in">
         {loadingUsers || loadingGroups ? (
           <div className="flex justify-center py-4"><span className="loading loading-spinner text-primary"></span></div>
         ) : (
