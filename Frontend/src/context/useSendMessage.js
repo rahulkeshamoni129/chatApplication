@@ -4,7 +4,7 @@ import axios from "axios"
 
 const useSendMessage = () => {
     const [loading, setLoading] = useState(false)
-    const { messages, setMessage, selectedConversation, replyingTo, setReplyingTo } = useConversation()
+    const { setMessage, selectedConversation, replyingTo, setReplyingTo } = useConversation()
     const sendMessages = async (message) => {
         setLoading(true);
 
@@ -12,7 +12,7 @@ const useSendMessage = () => {
             const res = await axios.post(`/api/message/send/${selectedConversation._id}`,
                 { message, replyTo: replyingTo?._id }
             );
-            setMessage([...messages, res.data.newMessage]);
+            setMessage(prev => [...prev, res.data.newMessage]);
             setReplyingTo(null);
             setLoading(false)
         } catch (error) {
