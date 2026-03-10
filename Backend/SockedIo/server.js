@@ -2,6 +2,7 @@ import { Server } from "socket.io"
 import http from "http"
 import express from "express"
 import Conversation from "../models/conversation.model.js"
+import User from "../models/user.model.js"
 
 
 
@@ -30,9 +31,12 @@ io.on("connection", (socket) => {
     }
     io.emit("getOnlineUsers", Object.keys(users))
     //used to listen clien side evenets on server side
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
         console.log("A user disconnected", socket.id)
-        delete users[userId]
+        if (userId) {
+            await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
+            delete users[userId]
+        }
         io.emit("getOnlineUsers", Object.keys(users))
     })
 

@@ -33,6 +33,10 @@ const messageSchema = new mongoose.Schema({
     starredBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
+    }],
+    reactions: [{
+        emoji: String,
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     }]
 }, {
     timestamps: true

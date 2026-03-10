@@ -31,6 +31,14 @@ const userSchema = mongoose.Schema({
     isAdmin: {
         type: Boolean,
         default: false
+    },
+    blockedUsers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    lastSeen: {
+        type: Date,
+        default: Date.now
     }
 }, { timestamps: true })//createdAt when the user is created & updatedAt when latest updated like password
 

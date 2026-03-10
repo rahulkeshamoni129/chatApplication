@@ -33,11 +33,16 @@ const useGetSocketMessage = () => {
             setMessage(messages.map(msg => msg._id === updatedMsg._id ? updatedMsg : msg));
         });
 
+        socket.on("messageReaction", ({ messageId, reactions }) => {
+            setMessage(messages.map(msg => msg._id === messageId ? { ...msg, reactions } : msg));
+        });
+
         return () => {
             socket.off("newMessage")
             socket.off("messageDeleted")
             socket.off("messagesSeen")
             socket.off("messageEdited")
+            socket.off("messageReaction")
         }
     }, [socket, messages, setMessage, selectedConversation, addUnread])
 }

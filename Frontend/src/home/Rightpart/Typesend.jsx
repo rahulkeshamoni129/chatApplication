@@ -16,11 +16,12 @@ function Typesend() {
   const { selectedConversation, editingMessage, setEditingMessage, replyingTo, setReplyingTo } = useConversation()
   const [authUser] = useAuth()
 
+  const isBlockedByMe = authUser?.user?.blockedUsers?.includes(selectedConversation?._id);
+
   const onEmojiClick = (emojiData) => {
     setMessage(prev => prev + emojiData.emoji);
   };
 
-  // Pre-fill input when editingMessage changes
   useEffect(() => {
     if (editingMessage) {
       setMessage(editingMessage.message);
@@ -31,7 +32,7 @@ function Typesend() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!message.trim()) return;
+    if (!message.trim() || isBlockedByMe) return;
 
     if (editingMessage) {
       await editMsg(editingMessage._id, message);
@@ -52,7 +53,7 @@ function Typesend() {
 
   const handleOnChange = (e) => {
     setMessage(e.target.value)
-    if (socket && selectedConversation) {
+    if (socket && selectedConversation && !isBlockedByMe) {
       socket.emit("typing", {
         senderId: authUser.user._id,
         receiverId: selectedConversation._id,
@@ -104,18 +105,19 @@ function Typesend() {
 
       <form onSubmit={handleSubmit}>
         <div className='flex items-center space-x-4 h-[10vh] px-6 bg-base-300 border-t border-base-200' >
-          <button type="button" onClick={() => setShowEmoji(!showEmoji)} className="btn btn-ghost btn-circle text-2xl text-base-content/70">
+          <button type="button" onClick={() => setShowEmoji(!showEmoji)} disabled={isBlockedByMe} className="btn btn-ghost btn-circle text-2xl text-base-content/70">
             <IoHappyOutline />
           </button>
 
           <div className='w-full'>
             <input type="text"
-              placeholder={editingMessage ? "Edit message..." : "Type a message..."}
+              placeholder={isBlockedByMe ? "You have blocked this user" : (editingMessage ? "Edit message..." : "Type a message...")}
               value={message}
               onChange={handleOnChange}
-              className="input input-bordered input-primary w-full rounded-full shadow-sm" />
+              disabled={isBlockedByMe}
+              className={`input input-bordered w-full rounded-full shadow-sm ${isBlockedByMe ? 'input-error opacity-50' : 'input-primary'}`} />
           </div>
-          <button disabled={sending || editing} className="btn btn-circle btn-primary shadow-md">
+          <button disabled={sending || editing || isBlockedByMe || !message.trim()} className="btn btn-circle btn-primary shadow-md">
             <IoSend className='text-2xl text-white' />
           </button>
         </div>

@@ -14,6 +14,7 @@ function User({ user }) {
   const isOnline = onlineUsers.includes(user._id)
   const isPinned = pinnedChats.includes(user._id)
   const isAdmin = authUser?.user?.isAdmin;
+  const isBlockedByMe = authUser?.user?.blockedUsers?.includes(user._id);
 
   const handleSelectUser = () => {
     setSelectedConversation(user)
@@ -70,6 +71,7 @@ function User({ user }) {
               {user.fullname}
               {user.isGroup && <span className="badge badge-xs badge-ghost text-[8px] opacity-60">GROUP</span>}
               {user.isBlocked && <span className="text-[10px] text-error font-bold">BLOCKED</span>}
+              {isBlockedByMe && <span className="text-[10px] text-error font-bold italic underline">BLOCKED BY YOU</span>}
               {isPinned && <BsPinAngleFill className="text-xs rotate-45 text-secondary" />}
             </h1>
             <span className={`text-xs truncate block ${isSelected ? "opacity-80" : "opacity-60"}`}>

@@ -251,3 +251,32 @@ export const toggleBlockUser = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const blockUser = async (req, res) => {
+    try {
+        const { id: targetId } = req.params;
+        const userId = req.user._id;
+
+        if (userId.toString() === targetId.toString()) {
+            return res.status(400).json({ error: "You cannot block yourself" });
+        }
+
+        const user = await User.findById(userId);
+        const index = user.blockedUsers.indexOf(targetId);
+
+        if (index === -1) {
+            user.blockedUsers.push(targetId);
+        } else {
+            user.blockedUsers.splice(index, 1);
+        }
+
+        await user.save();
+        res.status(200).json({
+            message: index === -1 ? "User blocked" : "User unblocked",
+            blockedUsers: user.blockedUsers
+        });
+    } catch (error) {
+        console.log("Error in blockUser: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};

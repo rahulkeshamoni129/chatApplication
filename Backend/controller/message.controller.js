@@ -20,13 +20,29 @@ export const sendMessage = async (req, res) => {
 
         if (!conversation) {
             // Only create if it's a user-to-user chat
-            const isUser = await User.exists({ _id: targetId });
-            if (isUser) {
+            const targetUser = await User.findById(targetId);
+            if (targetUser) {
+                // Check if blocked
+                const isBlockedByTarget = targetUser.blockedUsers.includes(senderId);
+                const currentUser = await User.findById(senderId);
+                const hasBlockedTarget = currentUser.blockedUsers.includes(targetId);
+
+                if (isBlockedByTarget || hasBlockedTarget) {
+                    return res.status(403).json({ error: "Messaging is blocked between you and this user" });
+                }
+
                 conversation = await Conversation.create({
                     members: [senderId, targetId]
                 });
             } else {
                 return res.status(404).json({ error: "Conversation not found" });
+            }
+        } else if (!conversation.isGroup) {
+            // Check blocking for existing 1-to-1 conversation
+            const targetUser = await User.findById(targetId);
+            const currentUser = await User.findById(senderId);
+            if (targetUser?.blockedUsers.includes(senderId) || currentUser?.blockedUsers.includes(targetId)) {
+                return res.status(403).json({ error: "Messaging is blocked between you and this user" });
             }
         }
 
@@ -202,22 +218,27 @@ export const editMessage = async (req, res) => {
 
 export const searchMessages = async (req, res) => {
     try {
-        const { id: chatUser } = req.params;
+        const { id: chatId } = req.params;
         const { query } = req.query;
         const senderId = req.user._id;
 
         if (!query) return res.status(400).json({ error: "Search query required" });
 
-        const messages = await Message.find({
-            $and: [
-                {
-                    $or: [
-                        { senderId: senderId, receiverId: chatUser },
-                        { senderId: chatUser, receiverId: senderId }
-                    ]
-                },
-                { $text: { $search: query } }
+        // Verify conversation access
+        const conversation = await Conversation.findOne({
+            $or: [
+                { _id: chatId },
+                { members: { $all: [senderId, chatId] }, isGroup: false }
             ]
+        });
+
+        if (!conversation) {
+            return res.status(404).json({ error: "Conversation not found" });
+        }
+
+        const messages = await Message.find({
+            _id: { $in: conversation.messages },
+            $text: { $search: query }
         }).sort({ createdAt: -1 });
 
         res.status(200).json(messages);
@@ -245,6 +266,45 @@ export const toggleStarMessage = async (req, res) => {
         res.status(200).json({ message: "Message star status updated", starredBy: message.starredBy });
     } catch (error) {
         console.log("Error in toggleStarMessage: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const toggleReaction = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { emoji } = req.body;
+        const userId = req.user._id;
+
+        const message = await Message.findById(id);
+        if (!message) return res.status(404).json({ error: "Message not found" });
+
+        const existingReactionIndex = message.reactions.findIndex(
+            r => r.userId.toString() === userId.toString() && r.emoji === emoji
+        );
+
+        if (existingReactionIndex !== -1) {
+            message.reactions.splice(existingReactionIndex, 1);
+        } else {
+            message.reactions.push({ emoji, userId });
+        }
+
+        await message.save();
+
+        // Broadcast to conversation members
+        const conversation = await Conversation.findOne({ messages: id });
+        if (conversation) {
+            conversation.members.forEach(memberId => {
+                if (memberId.toString() !== userId.toString()) {
+                    const socketId = getReceiverSocketId(memberId);
+                    if (socketId) io.to(socketId).emit("messageReaction", { messageId: id, reactions: message.reactions });
+                }
+            });
+        }
+
+        res.status(200).json({ message: "Reaction updated", reactions: message.reactions });
+    } catch (error) {
+        console.log("Error in toggleReaction: ", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };
