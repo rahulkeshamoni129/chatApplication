@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { BiLogOutCircle } from "react-icons/bi";
 import { FaSun, FaMoon } from "react-icons/fa";
+import { IoSettingsOutline } from "react-icons/io5";
 import axios from "axios";
 import Cookies from "js-cookie";
 import toast from 'react-hot-toast';
 import { useTranslation } from '../../context/TranslationContext';
+import Settings from '../../components/Settings';
 
 function Logout() {
   const [loading, setLoading] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark")
   const { lang, setLang, t } = useTranslation();
 
@@ -54,10 +57,16 @@ function Logout() {
           <option value="es">ES</option>
         </select>
 
+        <button onClick={() => setShowSettings(true)} className="btn btn-ghost btn-xs btn-circle text-xl text-base-content hover:bg-base-200" title="Settings">
+          <IoSettingsOutline />
+        </button>
+
         <button onClick={toggleTheme} className="btn btn-ghost btn-xs btn-circle text-xl text-base-content hover:bg-base-200">
           {theme === "dark" ? <FaSun className="text-warning" /> : <FaMoon className="text-primary" />}
         </button>
       </div>
+
+      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
     </div>
   )
 }

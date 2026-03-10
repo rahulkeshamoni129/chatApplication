@@ -230,6 +230,56 @@ export const allGroups = async (req, res) => {
     }
 };
 
+export const addGroupMember = async (req, res) => {
+    try {
+        const { groupId, memberId } = req.body;
+        const adminId = req.user._id;
+
+        const group = await Conversation.findById(groupId);
+        if (!group || !group.isGroup) return res.status(404).json({ error: "Group not found" });
+
+        if (group.groupAdmin.toString() !== adminId.toString()) {
+            return res.status(403).json({ error: "Only group admin can add members" });
+        }
+
+        if (group.members.includes(memberId)) {
+            return res.status(400).json({ error: "User is already a member" });
+        }
+
+        group.members.push(memberId);
+        await group.save();
+        res.status(200).json({ message: "Member added successfully", group });
+    } catch (error) {
+        console.log("Error in addGroupMember: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const removeGroupMember = async (req, res) => {
+    try {
+        const { groupId, memberId } = req.body;
+        const adminId = req.user._id;
+
+        const group = await Conversation.findById(groupId);
+        if (!group || !group.isGroup) return res.status(404).json({ error: "Group not found" });
+
+        if (group.groupAdmin.toString() !== adminId.toString()) {
+            return res.status(403).json({ error: "Only group admin can remove members" });
+        }
+
+        if (group.groupAdmin.toString() === memberId.toString()) {
+            return res.status(400).json({ error: "Admin cannot be removed" });
+        }
+
+        group.members = group.members.filter(m => m.toString() !== memberId.toString());
+        await group.save();
+        res.status(200).json({ message: "Member removed successfully", group });
+    } catch (error) {
+        console.log("Error in removeGroupMember: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 export const toggleBlockUser = async (req, res) => {
     try {
         const { id } = req.params;

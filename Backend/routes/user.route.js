@@ -1,5 +1,5 @@
 import express from "express";
-import { allUsers, login, logout, signup, updateProfile, changePassword, togglePinChat, createGroup, allGroups, toggleBlockUser, blockUser } from "../controller/user.controller.js";
+import { allUsers, login, logout, signup, updateProfile, changePassword, togglePinChat, createGroup, allGroups, toggleBlockUser, blockUser, addGroupMember, removeGroupMember } from "../controller/user.controller.js";
 import secureRoute from "../middleware/secureRoute.js";
 const router = express.Router();
 router.post("/signup", signup)
@@ -13,6 +13,8 @@ router.put("/update", secureRoute, updateProfile);
 router.put("/change-password", secureRoute, changePassword);
 router.put("/pin-chat", secureRoute, togglePinChat);
 router.post("/create-group", secureRoute, createGroup);
+router.put("/add-member", secureRoute, addGroupMember);
+router.put("/remove-member", secureRoute, removeGroupMember);
 router.put("/toggle-block/:id", secureRoute, toggleBlockUser);
 router.put("/block/:id", secureRoute, blockUser);
 

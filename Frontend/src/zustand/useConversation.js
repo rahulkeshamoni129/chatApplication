@@ -35,6 +35,9 @@ const useConversation = create((set) => ({
       ? state.pinnedChats.filter(id => id !== userId)
       : [...state.pinnedChats, userId];
     return { pinnedChats: newPinned };
-  })
+  }),
+
+  sidebarSearch: "",
+  setSidebarSearch: (sidebarSearch) => set({ sidebarSearch })
 }))
 export default useConversation

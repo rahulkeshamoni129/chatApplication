@@ -3,21 +3,22 @@ import { FaSearch } from "react-icons/fa";
 import userGetAllUsers from "../../context/userGetAllUsers";
 import useConversation from "../../zustand/useConversation";
 import toast from "react-hot-toast";
+import { useTranslation } from "../../context/TranslationContext";
 function Search() {
-  const [search, setSearch] = useState("");
+  const { setSelectedConversation, clearUnreads, sidebarSearch, setSidebarSearch } = useConversation();
   const [allUsers] = userGetAllUsers();
-  const { setSelectedConversation, clearUnreads } = useConversation();
-  console.log(allUsers);
+  const { t } = useTranslation();
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!search) return;
+    if (!sidebarSearch) return;
     const conversation = allUsers.find((user) =>
-      user.fullname?.toLowerCase().includes(search.toLowerCase())
+      user.fullname?.toLowerCase().includes(sidebarSearch.toLowerCase())
     );
     if (conversation) {
       setSelectedConversation(conversation);
       clearUnreads(conversation._id);
-      setSearch("");
+      setSidebarSearch("");
     }
     else {
       toast.error("User not found");
@@ -32,9 +33,9 @@ function Search() {
               <input
                 type="text"
                 className="grow text-sm"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('search')}
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
               />
             </label>
             <button type="submit" className="btn btn-circle btn-sm btn-ghost hover:bg-base-200">

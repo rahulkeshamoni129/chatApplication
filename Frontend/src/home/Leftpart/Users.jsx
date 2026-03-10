@@ -8,13 +8,15 @@ import CreateGroup from '../../components/CreateGroup'
 function Users() {
   const [allUsers, loadingUsers] = userGetAllUsers()
   const [allGroups, loadingGroups] = useGetGroups()
-  const { pinnedChats } = useConversation();
+  const { pinnedChats, sidebarSearch } = useConversation();
   const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   const combinedList = [
     ...allGroups.map(g => ({ ...g, isGroup: true, fullname: g.groupName, _id: g._id })),
     ...allUsers
-  ];
+  ].filter(item =>
+    item.fullname?.toLowerCase().includes(sidebarSearch.toLowerCase())
+  );
 
   const sortedList = combinedList.sort((a, b) => {
     const aPinned = pinnedChats.includes(a._id);

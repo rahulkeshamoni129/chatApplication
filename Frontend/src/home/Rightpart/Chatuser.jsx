@@ -3,16 +3,18 @@ import useConversation from "../../zustand/useConversation.js";
 import { useSocketcontext } from '../../context/SocketContext.jsx';
 import { useAuth } from '../../context/Authprovider.jsx';
 import { CiMenuFries, CiSearch } from "react-icons/ci";
-import { IoClose, IoBanOutline, IoBan } from "react-icons/io5";
+import { IoClose, IoBanOutline, IoBan, IoInformationCircleOutline } from "react-icons/io5";
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import GroupSettings from '../../components/GroupSettings.jsx';
 
 function Chatuser() {
-  const { selectedConversation } = useConversation();
+  const { selectedConversation, setSelectedConversation } = useConversation();
   const { onlineUsers, socket } = useSocketcontext();
   const [authUser, setAuthUser] = useAuth();
   const [typing, setTyping] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -22,7 +24,6 @@ function Chatuser() {
   const handleToggleBlock = async () => {
     try {
       const res = await axios.put(`/api/users/block/${selectedConversation._id}`);
-      // Update local storage and auth context
       const updatedUser = { ...authUser.user, blockedUsers: res.data.blockedUsers };
       const newAuthData = { ...authUser, user: updatedUser };
       localStorage.setItem("chatApp", JSON.stringify(newAuthData));
@@ -102,12 +103,8 @@ function Chatuser() {
   return (
     <div className="relative bg-base-300 h-[10vh] border-b border-base-200 shadow-sm flex items-center justify-between px-6 lg:px-10">
 
-      {/* Left: Drawer menu & User Info */}
       <div className="flex items-center gap-4">
-        <label
-          htmlFor="my-drawer-2"
-          className="btn btn-ghost btn-xs btn-circle lg:hidden"
-        >
+        <label htmlFor="my-drawer-2" className="btn btn-ghost btn-xs btn-circle lg:hidden">
           <CiMenuFries className="text-white text-xl" />
         </label>
 
@@ -144,7 +141,6 @@ function Chatuser() {
         )}
       </div>
 
-      {/* Right: Actions */}
       <div className="flex items-center gap-2">
         {showSearch ? (
           <div className="flex items-center gap-2 animate-in slide-in-from-right-5 duration-300">
@@ -157,9 +153,7 @@ function Chatuser() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-              {isSearching && (
-                <span className="loading loading-spinner loading-xs absolute right-3 top-2"></span>
-              )}
+              {isSearching && <span className="loading loading-spinner loading-xs absolute right-3 top-2"></span>}
               {searchResults.length > 0 && searchQuery && (
                 <div className="absolute top-full right-0 mt-2 w-64 md:w-80 bg-base-100 border border-base-200 rounded-2xl shadow-2xl z-[100] max-h-60 overflow-y-auto p-2 flex flex-col gap-1">
                   <p className="text-[10px] opacity-50 px-2 py-1 font-bold italic">Found {searchResults.length} results</p>
@@ -180,34 +174,31 @@ function Chatuser() {
                 </div>
               )}
             </div>
-            <button
-              onClick={() => { setShowSearch(false); setSearchQuery(""); }}
-              className="btn btn-ghost btn-sm btn-circle"
-            >
+            <button onClick={() => { setShowSearch(false); setSearchQuery(""); }} className="btn btn-ghost btn-sm btn-circle">
               <IoClose size={20} />
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => setShowSearch(true)}
-              className="btn btn-ghost btn-sm btn-circle text-base-content/70 hover:text-primary transition-colors"
-              title="Search Messages"
-            >
+            <button onClick={() => setShowSearch(true)} className="btn btn-ghost btn-sm btn-circle text-base-content/70 hover:text-primary transition-colors" title="Search Messages">
               <CiSearch size={22} />
             </button>
+            {selectedConversation.isGroup && (
+              <button onClick={() => setShowGroupSettings(true)} className="btn btn-ghost btn-sm btn-circle text-base-content/70 hover:text-primary transition-colors" title="Group Info">
+                <IoInformationCircleOutline size={22} />
+              </button>
+            )}
             {!selectedConversation.isGroup && (
-              <button
-                onClick={handleToggleBlock}
-                className={`btn btn-ghost btn-sm btn-circle ${isBlockedByMe ? 'text-error' : 'text-base-content/70 hover:text-error'} transition-colors`}
-                title={isBlockedByMe ? "Unblock User" : "Block User"}
-              >
+              <button onClick={handleToggleBlock} className={`btn btn-ghost btn-sm btn-circle ${isBlockedByMe ? 'text-error' : 'text-base-content/70 hover:text-error'} transition-colors`} title={isBlockedByMe ? "Unblock User" : "Block User"}>
                 {isBlockedByMe ? <IoBan size={20} /> : <IoBanOutline size={20} />}
               </button>
             )}
           </div>
         )}
       </div>
+      {showGroupSettings && (
+        <GroupSettings group={selectedConversation} onClose={() => setShowGroupSettings(false)} onUpdate={(updatedGroup) => setSelectedConversation(updatedGroup)} />
+      )}
     </div>
   );
 }

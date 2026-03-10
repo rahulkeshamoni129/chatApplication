@@ -6,6 +6,7 @@ import useEditMessage from '../../context/useEditMessage.js';
 import { useSocketcontext } from '../../context/SocketContext.jsx';
 import useConversation from '../../zustand/useConversation.js';
 import { useAuth } from '../../context/Authprovider.jsx';
+import { useTranslation } from '../../context/TranslationContext';
 
 function Typesend() {
   const [message, setMessage] = useState("")
@@ -15,6 +16,7 @@ function Typesend() {
   const { socket } = useSocketcontext()
   const { selectedConversation, editingMessage, setEditingMessage, replyingTo, setReplyingTo } = useConversation()
   const [authUser] = useAuth()
+  const { t } = useTranslation()
 
   const isBlockedByMe = authUser?.user?.blockedUsers?.includes(selectedConversation?._id);
 
@@ -91,7 +93,7 @@ function Typesend() {
         <div className="absolute bottom-full left-0 w-full bg-base-200 border-t border-x border-base-300 px-6 py-2 flex items-center justify-between text-xs animate-in slide-in-from-bottom-2 duration-200 rounded-t-xl shadow-lg z-20">
           <div className="truncate flex flex-col">
             <span className="font-bold text-primary italic">
-              {editingMessage ? "Editing message" : `Replying to ${replyingTo?.senderId === authUser.user._id ? "yourself" : "them"}`}
+              {editingMessage ? t('editingMessage') : `${t('replyingTo')} ${replyingTo?.senderId === authUser.user._id ? "yourself" : "them"}`}
             </span>
             <span className="truncate opacity-70 italic">
               "{editingMessage?.message || replyingTo?.message}"
@@ -111,7 +113,7 @@ function Typesend() {
 
           <div className='w-full'>
             <input type="text"
-              placeholder={isBlockedByMe ? "You have blocked this user" : (editingMessage ? "Edit message..." : "Type a message...")}
+              placeholder={isBlockedByMe ? t('blockedUser') : (editingMessage ? t('edit') + "..." : t('typeAMessage'))}
               value={message}
               onChange={handleOnChange}
               disabled={isBlockedByMe}
