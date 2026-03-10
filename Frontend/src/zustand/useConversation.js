@@ -7,6 +7,7 @@ const useConversation = create((set) => ({
   setMessage: (messages) => set({ messages }),
 
   unreads: {},
+  setUnreads: (unreads) => set({ unreads }),
   addUnread: (userId) => set((state) => ({
     unreads: { ...state.unreads, [userId]: (state.unreads[userId] || 0) + 1 }
   })),
@@ -14,6 +15,16 @@ const useConversation = create((set) => ({
     const newUnreads = { ...state.unreads };
     delete newUnreads[userId];
     return { unreads: newUnreads };
-  })
+  }),
+
+  updateMessage: (updatedMsg) => set((state) => ({
+    messages: state.messages.map((m) => m._id === updatedMsg._id ? updatedMsg : m)
+  })),
+
+  editingMessage: null,
+  setEditingMessage: (editingMessage) => set({ editingMessage }),
+
+  replyingTo: null,
+  setReplyingTo: (replyingTo) => set({ replyingTo })
 }))
 export default useConversation

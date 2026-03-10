@@ -22,9 +22,22 @@ const useGetSocketMessage = () => {
             setMessage(messages.filter((msg) => msg._id !== messageId));
         });
 
+        socket.on("messagesSeen", ({ seenMessages }) => {
+            const updatedMessages = messages.map(msg =>
+                seenMessages.includes(msg._id) ? { ...msg, seen: true } : msg
+            );
+            setMessage(updatedMessages);
+        });
+
+        socket.on("messageEdited", (updatedMsg) => {
+            setMessage(messages.map(msg => msg._id === updatedMsg._id ? updatedMsg : msg));
+        });
+
         return () => {
             socket.off("newMessage")
             socket.off("messageDeleted")
+            socket.off("messagesSeen")
+            socket.off("messageEdited")
         }
     }, [socket, messages, setMessage, selectedConversation, addUnread])
 }

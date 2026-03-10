@@ -6,10 +6,12 @@ import useConversation from "../../zustand/useConversation.js";
 import { useAuth } from "../../context/Authprovider.jsx";
 import { CiMenuFries } from "react-icons/ci";
 import useGetSocketMessage from "../../context/useGetSocketMessage.js";
+import useMarkSeen from "../../context/useMarkSeen.js";
 
 function Right() {
   const { selectedConversation, setSelectedConversation } = useConversation();
   useGetSocketMessage();
+  useMarkSeen();
   useEffect(() => {
     return setSelectedConversation(null);
   }, [setSelectedConversation]);

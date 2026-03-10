@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Message from "../models/message.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
 export const signup = async (req, res) => {
@@ -81,10 +82,22 @@ export const allUsers = async (req, res) => {
     try {
         const loggedInUser = req.user._id;
 
-        const filteredusers = await User.find({ _id: { $ne: loggedInUser } }).select("-password");//fetching the users from database
-        res.status(201).json(
-            filteredusers
-        );
+        const filteredusers = await User.find({ _id: { $ne: loggedInUser } }).select("-password");
+
+        // Enhance with unread counts for each contact
+        const usersWithUnreads = await Promise.all(filteredusers.map(async (user) => {
+            const count = await Message.countDocuments({
+                senderId: user._id,
+                receiverId: loggedInUser,
+                seen: false
+            });
+            return {
+                ...user.toObject(),
+                unreadCount: count
+            };
+        }));
+
+        res.status(200).json(usersWithUnreads);
     } catch (error) {
         console.log("Error in all users controller" + error);
         res.status(500).json({ error: "Internal server error" });
