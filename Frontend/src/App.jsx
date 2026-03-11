@@ -9,6 +9,7 @@ import { Toaster } from "react-hot-toast";
 import { Navigate, Route, Routes } from "react-router-dom";
 import useConversation from "./zustand/useConversation";
 import { useEffect } from "react";
+import useGetSocketMessage from "./context/useGetSocketMessage";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -19,6 +20,9 @@ function App() {
       setPinnedChats(authUser.user.pinnedChats);
     }
   }, [authUser, setPinnedChats]);
+
+  // ALWAYS listen to socket events (new messages, unreads, etc.)
+  useGetSocketMessage();
 
   console.log(authUser);
   return (

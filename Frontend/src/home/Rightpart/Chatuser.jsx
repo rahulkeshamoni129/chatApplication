@@ -10,7 +10,7 @@ import GroupSettings from '../../components/GroupSettings.jsx';
 
 function Chatuser() {
   const { selectedConversation, setSelectedConversation } = useConversation();
-  const { onlineUsers, socket } = useSocketcontext();
+  const { onlineUsers, socket, offlineUpdates } = useSocketcontext();
   const [authUser, setAuthUser] = useAuth();
   const [typing, setTyping] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -100,6 +100,8 @@ function Chatuser() {
 
   if (!selectedConversation) return null;
 
+  const activeLastSeen = offlineUpdates?.[selectedConversation._id] || selectedConversation.lastSeen;
+
   return (
     <div className="relative bg-base-300 h-[10vh] border-b border-base-200 shadow-sm flex items-center justify-between px-6 lg:px-10">
 
@@ -134,7 +136,7 @@ function Chatuser() {
                   ? `${selectedConversation.members.length} members`
                   : onlineUsers.includes(selectedConversation._id)
                     ? "online"
-                    : formatLastSeen(selectedConversation.lastSeen)
+                    : formatLastSeen(activeLastSeen)
               )}
             </span>
           </div>

@@ -34,10 +34,12 @@ io.on("connection", (socket) => {
     socket.on("disconnect", async () => {
         console.log("A user disconnected", socket.id)
         if (userId) {
-            await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
+            const now = new Date();
+            await User.findByIdAndUpdate(userId, { lastSeen: now });
             delete users[userId]
+            io.emit("getOnlineUsers", Object.keys(users))
+            io.emit("userOffline", { userId, lastSeen: now })
         }
-        io.emit("getOnlineUsers", Object.keys(users))
     })
 
     // Typing Indicators

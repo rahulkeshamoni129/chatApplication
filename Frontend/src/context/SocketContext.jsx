@@ -14,6 +14,8 @@ export const SocketProvider=({children})=>{
     const[socket,setSocket]=useState(null);
     const [authUser]=useAuth()
     const [onlineUsers,setOnlineUsers]=useState([])
+    const [offlineUpdates, setOfflineUpdates] = useState({})
+
     useEffect(()=>{
         if(authUser){
             const socket=io("http://localhost:3000",{
@@ -26,6 +28,9 @@ export const SocketProvider=({children})=>{
         socket.on("getOnlineUsers",(users)=>{
             setOnlineUsers(users);
         })
+        socket.on("userOffline", ({ userId, lastSeen }) => {
+            setOfflineUpdates(prev => ({ ...prev, [userId]: lastSeen }));
+        })
         return ()=>socket.close()
         }
         else{
@@ -37,7 +42,7 @@ export const SocketProvider=({children})=>{
 
     },[authUser]) 
     return(
-        <socketContext.Provider value={{socket,onlineUsers}}>
+        <socketContext.Provider value={{socket,onlineUsers,offlineUpdates}}>
             {children}
         </socketContext.Provider>
     )  
