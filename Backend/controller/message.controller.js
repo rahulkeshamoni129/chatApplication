@@ -407,3 +407,63 @@ export const forwardMessage = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const broadcastMessage = async (req, res) => {
+    try {
+        const { message } = req.body;
+        const senderId = req.user._id;
+
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: "Only admins can broadcast messages" });
+        }
+
+        const allUsers = await User.find({ _id: { $ne: senderId } });
+        const results = [];
+
+        for (const user of allUsers) {
+            let conversation = await Conversation.findOne({
+                members: { $all: [senderId, user._id] },
+                isGroup: false
+            });
+
+            if (!conversation) {
+                conversation = await Conversation.create({
+                    members: [senderId, user._id]
+                });
+            }
+
+            const newMessage = new Message({
+                senderId,
+                receiverId: user._id,
+                message
+            });
+
+            conversation.messages.push(newMessage._id);
+            await Promise.all([conversation.save(), newMessage.save()]);
+
+            const receiverSocketId = getReceiverSocketId(user._id);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("newMessage", newMessage);
+            }
+            results.push(newMessage);
+        }
+
+        res.status(200).json({ message: `Broadcast sent to ${results.length} users`, count: results.length });
+    } catch (error) {
+        console.log("Error in broadcastMessage: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const getStarredMessages = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const starredMessages = await Message.find({ starredBy: userId })
+            .populate('senderId', 'fullname username')
+            .sort({ createdAt: -1 });
+        res.status(200).json(starredMessages);
+    } catch (error) {
+        console.log("Error in getStarredMessages: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};

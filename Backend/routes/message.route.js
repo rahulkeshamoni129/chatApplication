@@ -1,12 +1,14 @@
 import express from "express";
-import { deleteMessage, getMessage, sendMessage, markMessagesAsSeen, editMessage, searchMessages, toggleStarMessage, toggleReaction, forwardMessage } from "../controller/message.controller.js";
+import { deleteMessage, getMessage, sendMessage, markMessagesAsSeen, editMessage, searchMessages, toggleStarMessage, toggleReaction, forwardMessage, broadcastMessage, getStarredMessages } from "../controller/message.controller.js";
 import secureRoute from "../middleware/secureRoute.js";
 
 const router = express.Router();
 
 router.post("/send/:id", secureRoute, sendMessage);
 router.post("/forward", secureRoute, forwardMessage);
+router.post("/broadcast", secureRoute, broadcastMessage);
 router.get("/get/:id", secureRoute, getMessage);
+router.get("/starred", secureRoute, getStarredMessages);
 router.delete("/delete/:id", secureRoute, deleteMessage);
 
 // Phase 2 Message Status additions

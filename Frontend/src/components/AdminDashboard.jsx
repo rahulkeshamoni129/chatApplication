@@ -7,10 +7,26 @@ import { Link } from 'react-router-dom';
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [broadcastText, setBroadcastText] = useState("");
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const handleBroadcast = async () => {
+    if (!broadcastText.trim()) return toast.error("Please enter a message to broadcast");
+    try {
+        setSendingBroadcast(true);
+        const res = await axios.post('/api/messages/broadcast', { message: broadcastText });
+        toast.success(res.data.message);
+        setBroadcastText("");
+    } catch (error) {
+        toast.error(error.response?.data?.error || "Failed to send broadcast");
+    } finally {
+        setSendingBroadcast(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -104,6 +120,32 @@ function AdminDashboard() {
                     <h3 className="text-sm font-bold opacity-50 uppercase tracking-widest">Suspended</h3>
                     <p className="text-3xl font-black">{bannedUsersCount}</p>
                 </div>
+            </div>
+        </div>
+
+        {/* Global Broadcast Tool */}
+        <div className="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 flex flex-col gap-4">
+            <div className="flex items-center gap-2 text-warning">
+                <IoShieldCheckmarkOutline size={24} />
+                <h3 className="font-bold uppercase tracking-wider">Global Broadcast System</h3>
+            </div>
+            <p className="text-sm opacity-60">Send a priority message to every user registered on the platform instantly.</p>
+            <div className="flex gap-2">
+                <input 
+                    type="text" 
+                    placeholder="Type broadcast message here..." 
+                    className="input input-bordered grow bg-base-200"
+                    value={broadcastText}
+                    onChange={(e) => setBroadcastText(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleBroadcast()}
+                />
+                <button 
+                    disabled={sendingBroadcast}
+                    onClick={handleBroadcast}
+                    className="btn btn-warning shadow-lg shadow-warning/20 font-bold px-8"
+                >
+                    {sendingBroadcast ? <span className="loading loading-spinner"></span> : "Broadcast Now"}
+                </button>
             </div>
         </div>
         

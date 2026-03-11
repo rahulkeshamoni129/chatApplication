@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { IoClose, IoPersonOutline, IoLockClosedOutline, IoImagesOutline } from 'react-icons/io5';
+import { IoClose, IoPersonOutline, IoLockClosedOutline, IoImagesOutline, IoStarOutline } from 'react-icons/io5';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/Authprovider';
+import StarredMessages from './StarredMessages';
 
 function Settings({ onClose }) {
     const [authUser, setAuthUser] = useAuth();
@@ -89,6 +90,12 @@ function Settings({ onClose }) {
                     >
                         <IoLockClosedOutline /> Security
                     </button>
+                    <button
+                        onClick={() => setActiveTab('starred')}
+                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'starred' ? 'text-primary border-b-2 border-primary' : 'text-base-content/60 hover:bg-base-200'}`}
+                    >
+                        <IoStarOutline /> Starred
+                    </button>
                 </div>
 
                 {/* Content */}
@@ -144,7 +151,7 @@ function Settings({ onClose }) {
                                 Save Profile Updates
                             </button>
                         </form>
-                    ) : (
+                    ) : activeTab === 'security' ? (
                         <form onSubmit={handleChangePassword} className="space-y-4">
                             <div className="form-control">
                                 <label className="label"><span className="label-text font-semibold">Current Password</span></label>
@@ -184,6 +191,8 @@ function Settings({ onClose }) {
                                 Update Password
                             </button>
                         </form>
+                    ) : (
+                        <StarredMessages onClose={() => setActiveTab('profile')} />
                     )}
                 </div>
             </div>
