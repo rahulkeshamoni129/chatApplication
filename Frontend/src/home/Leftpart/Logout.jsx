@@ -7,12 +7,16 @@ import Cookies from "js-cookie";
 import toast from 'react-hot-toast';
 import { useTranslation } from '../../context/TranslationContext';
 import Settings from '../../components/Settings';
+import { useAuth } from '../../context/Authprovider';
+import { IoShieldCheckmarkOutline } from 'react-icons/io5';
+import { Link } from 'react-router-dom';
 
 function Logout() {
   const [loading, setLoading] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark")
   const { lang, setLang, t } = useTranslation();
+  const [authUser] = useAuth();
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -56,6 +60,12 @@ function Logout() {
           <option value="hi">हि</option>
           <option value="es">ES</option>
         </select>
+
+        {authUser?.user?.isAdmin && (
+          <Link to="/admin" className="btn btn-ghost btn-xs btn-circle text-xl text-warning hover:bg-base-200" title="Admin Control Dashboard">
+            <IoShieldCheckmarkOutline />
+          </Link>
+        )}
 
         <button onClick={() => setShowSettings(true)} className="btn btn-ghost btn-xs btn-circle text-xl text-base-content hover:bg-base-200" title="Settings">
           <IoSettingsOutline />

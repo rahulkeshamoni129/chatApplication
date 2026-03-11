@@ -41,6 +41,7 @@ export const signup = async (req, res) => {
                     username: newUser.username,
                     email: newUser.email,
                     bio: newUser.bio,
+                    isAdmin: newUser.isAdmin,
                     pinnedChats: newUser.pinnedChats
                 }
             })
@@ -70,6 +71,7 @@ export const login = async (req, res) => {
                 username: user.username,
                 email: user.email,
                 bio: user.bio,
+                isAdmin: user.isAdmin,
                 pinnedChats: user.pinnedChats
             }
         });

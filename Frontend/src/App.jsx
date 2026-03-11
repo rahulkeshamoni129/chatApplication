@@ -10,6 +10,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import useConversation from "./zustand/useConversation";
 import { useEffect } from "react";
 import useGetSocketMessage from "./context/useGetSocketMessage";
+import AdminDashboard from "./components/AdminDashboard";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
@@ -68,6 +69,10 @@ function App() {
         <Route
           path="/signup"
           element={authUser ? <Navigate to="/" /> : <Signup />}
+        />
+        <Route
+          path="/admin"
+          element={authUser?.user?.isAdmin ? <AdminDashboard /> : <Navigate to="/" />}
         />
       </Routes>
       <Toaster />

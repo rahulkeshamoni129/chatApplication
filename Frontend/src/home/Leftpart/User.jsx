@@ -1,5 +1,6 @@
 import React from 'react'
 import { BsPinAngleFill, BsPinAngle } from 'react-icons/bs'
+import { FaTrash } from 'react-icons/fa'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import useConversation from '../../zustand/useConversation.js'
