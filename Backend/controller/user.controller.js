@@ -4,21 +4,29 @@ import Conversation from "../models/conversation.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
 export const signup = async (req, res) => {
-    const { fullname, email, password, confirmPassword } = req.body;
+    const { fullname, username, email, password, confirmPassword } = req.body;
     try {
         if (password != confirmPassword) {
             return res.status(400).json({ error: "Password does not match" });//status 400 is for invalid data
         }
         //finding a user if already exists with email
-        const user = await User.findOne({ email })
-        if (user) {
-            return res.status(400).json({ error: "User already exists", user });
+        const userByEmail = await User.findOne({ email })
+        if (userByEmail) {
+            return res.status(400).json({ error: "User already exists with this email" });
         }
+        
+        //finding a user if already exists with username
+        const userByUsername = await User.findOne({ username })
+        if (userByUsername) {
+            return res.status(400).json({ error: "Username is already taken" });
+        }
+        
         //hashing the password and saving
         const hashPassword = await bcrypt.hash(password, 10);
         //if user not exists then create a new user
         const newUser = await new User({
             fullname,
+            username,
             email,
             password: hashPassword
         });
@@ -30,6 +38,7 @@ export const signup = async (req, res) => {
                 user: {
                     _id: newUser._id,
                     fullname: newUser.fullname,
+                    username: newUser.username,
                     email: newUser.email,
                     bio: newUser.bio,
                     pinnedChats: newUser.pinnedChats
@@ -58,6 +67,7 @@ export const login = async (req, res) => {
             message: "User Logged in Succesfully", user: {
                 _id: user._id,
                 fullname: user.fullname,
+                username: user.username,
                 email: user.email,
                 bio: user.bio,
                 pinnedChats: user.pinnedChats

@@ -25,6 +25,7 @@ function Signup() {
   const onSubmit = async(data) =>{//storign teh value on submit button
     const userInfo={
         fullname:data.fullname,
+        username:data.username,
         email:data.email,
         password:data.password,
         confirmPassword:data.confirmPassword
@@ -52,7 +53,6 @@ function Signup() {
         </h1>
         <h2 className='text-xl text-white font-bold'>Signup</h2>
         <br/>
-            {/*User name*/}
             <label className="input input-bordered flex items-center gap-2">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -64,10 +64,22 @@ function Signup() {
             </svg>
             <input type="text" 
                 className="grow" 
-                placeholder="Username" 
+                placeholder="Full Name" 
                 {...register("fullname", { required: true })}/>
             </label>
             {errors.fullname && <span className='text-red-500 text-sm font-semibold'>This field is required</span>}
+
+            {/*Username*/}
+            <label className="input input-bordered flex items-center gap-2">
+            <span className="opacity-70 font-bold">@</span>
+            <input type="text" 
+                className="grow" 
+                placeholder="Username" 
+                {...register("username", { required: true, pattern: /^[a-zA-Z0-9_]+$/ })}/>
+            </label>
+            {errors.username?.type === 'pattern' && <span className='text-red-500 text-sm font-semibold'>Letters, numbers, and underscores only.</span>}
+            {errors.username?.type === 'required' && <span className='text-red-500 text-sm font-semibold'>This field is required</span>}
+            
             {/*Email*/}
             <label className="input input-bordered flex items-center gap-2">
             <svg

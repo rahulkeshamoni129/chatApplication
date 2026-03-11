@@ -105,6 +105,20 @@ function Settings({ onClose }) {
                             </div>
 
                             <div className="form-control">
+                                <label className="label"><span className="label-text font-semibold">Username</span></label>
+                                <label className="input input-bordered flex items-center gap-2 bg-base-300 opacity-70 cursor-not-allowed">
+                                    <span className="font-bold opacity-50">@</span>
+                                    <input
+                                        type="text"
+                                        className="grow"
+                                        value={authUser?.user?.username || ""}
+                                        disabled
+                                        title="Usernames cannot be changed"
+                                    />
+                                </label>
+                            </div>
+
+                            <div className="form-control">
                                 <label className="label"><span className="label-text font-semibold">Full Name</span></label>
                                 <input
                                     type="text"

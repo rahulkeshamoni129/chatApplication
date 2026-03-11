@@ -15,11 +15,21 @@ function Chatuser() {
   const [typing, setTyping] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [showUserInfo, setShowUserInfo] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [tick, setTick] = useState(0);
 
   const isBlockedByMe = authUser?.user?.blockedUsers?.includes(selectedConversation?._id);
+
+  // Force re-render every minute to update relative "last seen" times
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(prev => prev + 1);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleToggleBlock = async () => {
     try {
@@ -91,10 +101,13 @@ function Chatuser() {
   const formatLastSeen = (date) => {
     if (!date) return "offline";
     const d = new Date(date);
-    const diff = (new Date() - d) / 1000;
-    if (diff < 60) return "last seen just now";
-    if (diff < 3600) return `last seen ${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `last seen ${Math.floor(diff / 3600)}h ago`;
+    const now = new Date();
+    // Use Math.abs to fix clock skew issues where server time is slightly ahead of frontend time
+    const diffInSeconds = Math.abs((now - d) / 1000);
+    
+    if (diffInSeconds < 60) return "last seen just now";
+    if (diffInSeconds < 3600) return `last seen ${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `last seen ${Math.floor(diffInSeconds / 3600)}h ago`;
     return `last seen on ${d.toLocaleDateString()}`;
   };
 
@@ -191,15 +204,55 @@ function Chatuser() {
               </button>
             )}
             {!selectedConversation.isGroup && (
-              <button onClick={handleToggleBlock} className={`btn btn-ghost btn-sm btn-circle ${isBlockedByMe ? 'text-error' : 'text-base-content/70 hover:text-error'} transition-colors`} title={isBlockedByMe ? "Unblock User" : "Block User"}>
-                {isBlockedByMe ? <IoBan size={20} /> : <IoBanOutline size={20} />}
-              </button>
+              <>
+                <button onClick={() => setShowUserInfo(true)} className="btn btn-ghost btn-sm btn-circle text-base-content/70 hover:text-primary transition-colors" title="User Info">
+                  <IoInformationCircleOutline size={22} />
+                </button>
+                <button onClick={handleToggleBlock} className={`btn btn-ghost btn-sm btn-circle ${isBlockedByMe ? 'text-error' : 'text-base-content/70 hover:text-error'} transition-colors`} title={isBlockedByMe ? "Unblock User" : "Block User"}>
+                  {isBlockedByMe ? <IoBan size={20} /> : <IoBanOutline size={20} />}
+                </button>
+              </>
             )}
           </div>
         )}
       </div>
       {showGroupSettings && (
         <GroupSettings group={selectedConversation} onClose={() => setShowGroupSettings(false)} onUpdate={(updatedGroup) => setSelectedConversation(updatedGroup)} />
+      )}
+
+      {showUserInfo && (
+        <dialog id="user_info_modal" className="modal modal-open">
+          <div className="modal-box glass bg-base-300 border border-white/10 shadow-2xl">
+            <h3 className="font-bold text-lg mb-4 text-primary flex items-center gap-2">
+              <IoInformationCircleOutline size={24} />
+              User Information
+            </h3>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4 bg-base-200/50 p-4 rounded-xl border border-white/5">
+                <div className="avatar">
+                  <div className="w-16 rounded-full border-2 border-primary">
+                    <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedConversation.fullname}`} alt="avatar" />
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-bold text-xl">{selectedConversation.fullname}</h4>
+                  <p className="text-xs opacity-50">@{selectedConversation.username}</p>
+                </div>
+              </div>
+
+              <div className="bg-base-200/50 p-4 rounded-xl border border-white/5">
+                <h4 className="text-xs font-bold uppercase opacity-50 mb-1 tracking-wider">About</h4>
+                <p className="text-sm leading-relaxed">{selectedConversation.bio || "Hey there! I am using this chat app."}</p>
+              </div>
+            </div>
+            <div className="modal-action">
+              <button className="btn btn-sm" onClick={() => setShowUserInfo(false)}>Close</button>
+            </div>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setShowUserInfo(false)}>
+            <button>close</button>
+          </form>
+        </dialog>
       )}
     </div>
   );

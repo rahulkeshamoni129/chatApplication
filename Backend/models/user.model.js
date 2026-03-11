@@ -4,6 +4,11 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    username: {
+        type: String,
+        required: true,
+        unique: true
+    },
     email: {
         type: String,
         required: true,
@@ -37,8 +42,8 @@ const userSchema = mongoose.Schema({
         ref: 'User'
     }],
     lastSeen: {
-        type: Date,
-        default: Date.now
+        type: Date
+        // Removed default: Date.now to prevent Mongoose from spoofing the current time for old accounts
     }
 }, { timestamps: true })//createdAt when the user is created & updatedAt when latest updated like password
 

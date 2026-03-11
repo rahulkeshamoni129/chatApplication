@@ -75,7 +75,7 @@ function User({ user }) {
               {isPinned && <BsPinAngleFill className="text-xs rotate-45 text-secondary" />}
             </h1>
             <span className={`text-xs truncate block ${isSelected ? "opacity-80" : "opacity-60"}`}>
-              {user.isGroup ? `${user.members.length} members` : user.email}
+              {user.isGroup ? `${user.members.length} members` : `@${user.username}`}
             </span>
           </div>
 
