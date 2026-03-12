@@ -1,24 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { IoArrowBack, IoShieldCheckmarkOutline, IoBanOutline, IoBan, IoPeopleOutline } from 'react-icons/io5';
+import { IoArrowBack, IoShieldCheckmarkOutline, IoBanOutline, IoBan, IoPeopleOutline, IoTimeOutline, IoConstructOutline } from 'react-icons/io5';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 
 function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [broadcastText, setBroadcastText] = useState("");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
   useEffect(() => {
     fetchUsers();
+    fetchLogs();
+    fetchConfig();
   }, []);
+
+  const fetchLogs = async () => {
+    try {
+        const res = await axios.get('/api/users/logs');
+        setLogs(res.data);
+    } catch (error) {
+        console.log("Error loading logs");
+    }
+  };
+
+  const fetchConfig = async () => {
+    try {
+        const res = await axios.get('/api/users/config');
+        setMaintenanceMode(res.data.maintenanceMode);
+    } catch (error) {
+        console.log("Error loading config");
+    }
+  };
+
+  const handleToggleMaintenance = async () => {
+    try {
+        const res = await axios.put('/api/users/toggle-maintenance');
+        setMaintenanceMode(res.data.maintenanceMode);
+        toast.success(res.data.message);
+    } catch (error) {
+        toast.error("Failed to toggle maintenance mode");
+    }
+  };
 
   const handleBroadcast = async () => {
     if (!broadcastText.trim()) return toast.error("Please enter a message to broadcast");
     try {
         setSendingBroadcast(true);
-        const res = await axios.post('/api/messages/broadcast', { message: broadcastText });
+        const res = await axios.post('/api/message/broadcast', { message: broadcastText });
         toast.success(res.data.message);
         setBroadcastText("");
     } catch (error) {
@@ -146,6 +178,54 @@ function AdminDashboard() {
                 >
                     {sendingBroadcast ? <span className="loading loading-spinner"></span> : "Broadcast Now"}
                 </button>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Maintenance Mode Tool */}
+            <div className={`p-6 rounded-2xl shadow-sm border transition-colors duration-300 ${maintenanceMode ? 'bg-error/10 border-error/30' : 'bg-base-100 border-base-300'}`}>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <IoConstructOutline size={24} className={maintenanceMode ? 'text-error' : 'text-primary'} />
+                        <h3 className="font-bold uppercase tracking-wider">System Maintenance</h3>
+                    </div>
+                    <input 
+                        type="checkbox" 
+                        className="toggle toggle-error" 
+                        checked={maintenanceMode}
+                        onChange={handleToggleMaintenance}
+                    />
+                </div>
+                <p className="text-sm opacity-70 mb-4">
+                    {maintenanceMode 
+                        ? "Currently: PUBLIC ACCESS RESTRICTED. Only admins can use the platform." 
+                        : "Currently: PUBLIC ACCESS OPEN. All users can chat normally."}
+                </p>
+                {maintenanceMode && (
+                    <div className="alert alert-error text-xs font-bold py-2 rounded-xl">
+                        <span>SYSTEM IS IN LOCKDOWN MODE</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Recent Activity Logs */}
+            <div className="bg-base-100 p-6 rounded-2xl shadow-sm border border-base-300 flex flex-col max-h-[300px]">
+                <div className="flex items-center gap-2 text-primary mb-4">
+                    <IoTimeOutline size={24} />
+                    <h3 className="font-bold uppercase tracking-wider">Recent Activity Logs</h3>
+                </div>
+                <div className="overflow-y-auto flex-1 flex flex-col gap-2 pr-2 custom-scrollbar">
+                    {logs.map((log) => (
+                        <div key={log._id} className="text-[11px] p-2 bg-base-200 rounded-lg flex justify-between items-center border border-base-300/50">
+                            <div className="flex items-center gap-2">
+                                <span className="badge badge-primary badge-outline badge-xs font-bold">{log.action}</span>
+                                <span className="font-bold">{log.userId?.username || "System"}</span>
+                            </div>
+                            <span className="opacity-50 text-[9px]">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                        </div>
+                    ))}
+                    {logs.length === 0 && <p className="text-center opacity-30 italic py-4">No recent activity logs.</p>}
+                </div>
             </div>
         </div>
         

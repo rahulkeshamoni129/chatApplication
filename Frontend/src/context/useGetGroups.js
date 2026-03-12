@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import Cookies from "js-cookie"
 import axios from "axios"
+import useConversation from '../zustand/useConversation.js';
 
 function useGetGroups() {
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(false)
+    const { setUnreads, seedLastMessageAt } = useConversation();
 
     useEffect(() => {
         const getGroups = async () => {
@@ -18,6 +20,17 @@ function useGetGroups() {
                     }
                 })
                 setGroups(response.data);
+
+                // Sync group unread counts and seed lastMessageAt
+                response.data.forEach(group => {
+                    if (group.unreadCount > 0) {
+                        setUnreads(prev => ({ ...prev, [group._id]: group.unreadCount }));
+                    }
+                    if (group.lastMessageAt) {
+                        seedLastMessageAt(group._id, group.lastMessageAt);
+                    }
+                });
+
                 setLoading(false);
             } catch (error) {
                 console.log("Error in useGetGroups " + error);
@@ -25,7 +38,7 @@ function useGetGroups() {
             }
         }
         getGroups()
-    }, [])
+    }, [setUnreads])
     return [groups, loading]
 }
 

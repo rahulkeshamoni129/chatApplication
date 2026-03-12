@@ -42,6 +42,10 @@ const messageSchema = new mongoose.Schema({
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         seenAt: { type: Date, default: Date.now }
     }],
+    isPinned: {
+        type: Boolean,
+        default: false
+    }
 }, {
     timestamps: true
 });

@@ -11,10 +11,16 @@ import useConversation from "./zustand/useConversation";
 import { useEffect } from "react";
 import useGetSocketMessage from "./context/useGetSocketMessage";
 import AdminDashboard from "./components/AdminDashboard";
+import useTheme from "./zustand/useTheme";
 
 function App() {
   const [authUser, setAuthUser] = useAuth();
   const { setPinnedChats } = useConversation();
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     if (authUser?.user?.pinnedChats) {

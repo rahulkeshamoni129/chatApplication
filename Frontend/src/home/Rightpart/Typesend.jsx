@@ -14,7 +14,7 @@ function Typesend() {
   const { loading: sending, sendMessages } = useSendMessage()
   const { loading: editing, editMsg } = useEditMessage()
   const { socket } = useSocketcontext()
-  const { selectedConversation, editingMessage, setEditingMessage, replyingTo, setReplyingTo } = useConversation()
+  const { selectedConversation, editingMessage, setEditingMessage, replyingTo, setReplyingTo, bumpConversation } = useConversation()
   const [authUser] = useAuth()
   const { t } = useTranslation()
 
@@ -34,16 +34,22 @@ function Typesend() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!message.trim() || isBlockedByMe) return;
+    const trimmed = message.trim();
+    if (!trimmed || isBlockedByMe) return;
 
-    if (editingMessage) {
-      await editMsg(editingMessage._id, message);
-    } else {
-      await sendMessages(message)
-    }
-
+    // Clear input and bump chat to top IMMEDIATELY (optimistic)
     setMessage("")
     setShowEmoji(false)
+    if (!editingMessage) {
+      bumpConversation(selectedConversation._id);
+    }
+
+    if (editingMessage) {
+      await editMsg(editingMessage._id, trimmed);
+    } else {
+      await sendMessages(trimmed);
+    }
+
     if (socket) {
       socket.emit("stopTyping", {
         senderId: authUser.user._id,

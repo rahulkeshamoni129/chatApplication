@@ -6,7 +6,7 @@ import useConversation from '../zustand/useConversation.js';
 function userGetAllUsers() {
     const [allUsers, setAllUsers] = useState([]);
     const [loading, setLoading] = useState(false)
-    const { setUnreads } = useConversation();
+    const { setUnreads, seedLastMessageAt } = useConversation();
 
     useEffect(() => {
         const getUsers = async () => {
@@ -21,14 +21,15 @@ function userGetAllUsers() {
                 })
                 setAllUsers(response.data);
 
-                // Sync unread counts for Feature 13
-                const initialUnreads = {};
+                // Sync unread counts and seed lastMessageAt from backend
                 response.data.forEach(user => {
                     if (user.unreadCount > 0) {
-                        initialUnreads[user._id] = user.unreadCount;
+                        setUnreads(prev => ({ ...prev, [user._id]: user.unreadCount }));
+                    }
+                    if (user.lastMessageAt) {
+                        seedLastMessageAt(user._id, user.lastMessageAt);
                     }
                 });
-                setUnreads(initialUnreads);
 
                 setLoading(false);
             } catch (error) {

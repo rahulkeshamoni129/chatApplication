@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteMessage, getMessage, sendMessage, markMessagesAsSeen, editMessage, searchMessages, toggleStarMessage, toggleReaction, forwardMessage, broadcastMessage, getStarredMessages } from "../controller/message.controller.js";
+import { deleteMessage, getMessage, sendMessage, markMessagesAsSeen, editMessage, searchMessages, toggleStarMessage, toggleReaction, forwardMessage, broadcastMessage, getStarredMessages, togglePinMessage } from "../controller/message.controller.js";
 import secureRoute from "../middleware/secureRoute.js";
 
 const router = express.Router();
@@ -17,5 +17,6 @@ router.put("/edit/:id", secureRoute, editMessage);
 router.get("/search/:id", secureRoute, searchMessages);
 router.put("/star/:id", secureRoute, toggleStarMessage);
 router.put("/reaction/:id", secureRoute, toggleReaction);
+router.put("/pin/:id", secureRoute, togglePinMessage);
 
 export default router;

@@ -25,25 +25,21 @@ function Search() {
     }
   };
   return (
-    <div className="h-[10vh] border-b border-base-200 w-full flex items-center bg-base-100">
-      <div className="px-6 w-full mt-2">
-        <form onSubmit={handleSubmit} className="w-full">
-          <div className="flex space-x-3 w-full items-center">
-            <label className="input input-bordered input-sm rounded-full flex items-center gap-2 w-full bg-base-200 border-none shadow-inner focus-within:shadow-none focus-within:bg-base-100 focus-within:ring-1 focus-within:ring-primary transition-all">
-              <input
-                type="text"
-                className="grow text-sm"
-                placeholder={t('search')}
-                value={sidebarSearch}
-                onChange={(e) => setSidebarSearch(e.target.value)}
-              />
-            </label>
-            <button type="submit" className="btn btn-circle btn-sm btn-ghost hover:bg-base-200">
-              <FaSearch className="text-base-content/70" />
-            </button>
+    <div className="p-4 bg-base-100">
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-base-content/30 group-focus-within:text-primary transition-colors">
+            <FaSearch size={14} />
           </div>
-        </form>
-      </div>
+          <input
+            type="text"
+            className="w-full bg-base-200 border-none rounded-2xl py-3 pl-11 pr-4 text-sm font-medium placeholder:text-base-content/30 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+            placeholder={t('search')}
+            value={sidebarSearch}
+            onChange={(e) => setSidebarSearch(e.target.value)}
+          />
+        </div>
+      </form>
     </div>
   );
 }

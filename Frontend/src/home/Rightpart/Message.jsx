@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { FaTrash, FaReply, FaPencilAlt, FaStar, FaRegStar, FaShare } from 'react-icons/fa'
 import { IoCheckmarkDoneOutline, IoCheckmarkOutline, IoEyeOutline } from 'react-icons/io5'
+import { BsPinAngle, BsPinAngleFill } from 'react-icons/bs'
 import { MdOutlineAddReaction } from "react-icons/md";
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -13,26 +14,29 @@ function Message({ message }) {
   const { setEditingMessage, setReplyingTo, updateMessage, selectedConversation } = useConversation();
   const [showForward, setShowForward] = useState(false);
   const [showSeenBy, setShowSeenBy] = useState(false);
-  const itsMe = message.senderId === authUser.user._id;
+  const senderId = message.senderId?._id || message.senderId;
+  const itsMe = senderId === authUser.user._id;
   const isAdmin = authUser.user.isAdmin;
   const { deleteMessage } = useDeleteMessage();
   const isStarred = message.starredBy?.includes(authUser.user._id);
 
   const chatName = itsMe ? "chat-end" : "chat-start"
-  const chatColor = itsMe ? "bg-primary text-primary-content" : "bg-base-200 text-base-content border border-base-300"
+  const chatBubbleStyle = itsMe 
+    ? "bg-primary text-primary-content shadow-lg shadow-primary/20 rounded-2xl rounded-tr-none" 
+    : "bg-base-100 text-base-content border border-base-200 shadow-sm rounded-2xl rounded-tl-none"
 
   // Format DateTime
   const createdAt = new Date(message.createdAt)
-  const formattedTime = createdAt.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-  const formattedDate = createdAt.toLocaleDateString([], {
-    month: 'short',
-    day: 'numeric'
-  })
+  const formattedTime = createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
   const isEditable = itsMe && (new Date() - new Date(message.createdAt)) < 5 * 60 * 1000;
+
+  const reactionEmojis = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
+
+  const reactionsGrouped = message.reactions?.reduce((acc, curr) => {
+    acc[curr.emoji] = (acc[curr.emoji] || 0) + 1;
+    return acc;
+  }, {});
 
   const handleToggleStar = async () => {
     try {
@@ -40,15 +44,9 @@ function Message({ message }) {
       updateMessage({ ...message, starredBy: res.data.starredBy });
       toast.success(isStarred ? "Message unstarred" : "Message starred");
     } catch (error) {
-      console.log("Error starring message:", error);
       toast.error("Failed to update star status");
     }
   }
-
-  const reactionsGrouped = message.reactions?.reduce((acc, curr) => {
-    acc[curr.emoji] = (acc[curr.emoji] || 0) + 1;
-    return acc;
-  }, {});
 
   const handleToggleReaction = async (emoji) => {
     try {
@@ -59,130 +57,131 @@ function Message({ message }) {
     }
   }
 
-  const reactionEmojis = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
   return (
-    <div id={message._id}>
+    <div id={message._id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className='group'>
         <div className={`chat ${chatName}`}>
-          <div className="relative">
-            <div className={`chat-bubble ${chatColor} shadow-sm relative text-sm flex flex-col gap-1`}>
+          <div className={`relative max-w-[85%] sm:max-w-[75%] ${itsMe ? 'ml-auto' : ''}`}>
+            <div className={`chat-bubble ${chatBubbleStyle} min-h-0 py-2.5 px-3 relative text-[13px] font-medium leading-relaxed w-fit max-w-full pb-6 pr-10`}>
+              {selectedConversation?.isGroup && !itsMe && (
+                <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 opacity-80">
+                  {message.senderId?.fullname || "Unknown User"}
+                </div>
+              )}
               {message.replyTo && (
-                <div className="bg-base-300/30 border-l-4 border-primary p-2 rounded mb-1 text-[11px] opacity-80 cursor-pointer hover:bg-base-300/50 transition-all max-w-[200px]">
-                  <p className="font-bold text-primary truncate">
+                <div className={`${itsMe ? 'bg-primary-focus/30 border-primary-content/50' : 'bg-base-200 border-primary'} border-l-2 p-2 rounded-lg mb-1.5 text-[10px] opacity-90 cursor-pointer transition-all max-w-full overflow-hidden`}>
+                  <p className="font-black opacity-60 truncate">
                     {message.replyTo.senderId === authUser.user._id ? "You" : "Them"}
                   </p>
                   <p className="truncate italic">"{message.replyTo.message}"</p>
                 </div>
               )}
-              <div className="pr-4">
+              
+              <div className="whitespace-pre-wrap break-words inline-block min-w-[20px]">
                 {message.message}
                 {message.edited && (
-                  <span className="text-[10px] opacity-70 ml-2 italic">(edited)</span>
+                  <span className="text-[9px] opacity-50 ml-2 font-black italic uppercase tracking-tighter">Edited</span>
+                )}
+              </div>
+
+              {/* Time and Status inside bubble */}
+              <div className={`absolute bottom-1 right-2 flex items-center gap-1.5 select-none ${itsMe ? 'opacity-70' : 'opacity-40'}`}>
+                <span className="text-[9px] font-black tracking-tighter">{formattedTime}</span>
+                {itsMe && (
+                  <div className="flex items-center translate-y-[0.5px]">
+                    {selectedConversation?.isGroup ? (
+                      <div className="relative group/seen">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setShowSeenBy(!showSeenBy); }}
+                          className="flex items-center transition-colors"
+                        >
+                          {message.seenBy?.length > 0 ? (
+                            <span className="flex items-center text-primary-content">
+                              <IoCheckmarkDoneOutline size={13} className="stroke-[3]" />
+                            </span>
+                          ) : (
+                            <IoCheckmarkOutline size={13} className="text-primary-content/60" />
+                          )}
+                        </button>
+                        {showSeenBy && message.seenBy?.length > 0 && (
+                          <div className="absolute bottom-full right-0 mb-2 w-36 bg-base-100 border border-base-300 rounded-2xl shadow-2xl p-3 z-50 animate-in slide-in-from-bottom-2 text-base-content">
+                            <p className="font-black text-[9px] uppercase opacity-40 mb-2 tracking-widest border-b border-base-200 pb-1">Seen by</p>
+                            <div className="flex flex-col gap-1.5">
+                               {message.seenBy.map((s, idx) => (
+                                 <p key={idx} className="text-[10px] font-bold truncate">{s.userId?.fullname || "Unknown"}</p>
+                               ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      message.seen ? (
+                        <IoCheckmarkDoneOutline className={`${itsMe ? 'text-primary-content' : 'text-primary'} stroke-[3]`} size={13} />
+                      ) : (
+                        <IoCheckmarkOutline className="text-primary-content/60" size={13} />
+                      )
+                    )}
+                  </div>
                 )}
               </div>
 
               {isStarred && (
-                <FaStar className="absolute top-2 right-2 text-warning text-[10px]" />
+                <div className="absolute -top-1.5 -right-1.5 bg-warning text-warning-content p-1 rounded-full shadow-md scale-75 animate-in zoom-in">
+                   <FaStar size={10} />
+                </div>
               )}
 
-              {/* Actions */}
-              <div className={`absolute top-1/2 transform -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${itsMe ? '-left-36' : '-right-28'}`}>
-                {/* Reaction Picker Dropdown */}
-                <div className="dropdown dropdown-top dropdown-end">
-                  <label tabIndex={0} className="hover:text-primary p-1 cursor-pointer">
-                    <MdOutlineAddReaction size={14} />
-                  </label>
-                  <div tabIndex={0} className="dropdown-content z-[1] menu p-1 shadow-2xl bg-base-100 rounded-full flex flex-row gap-0.5 mb-2 border border-base-200 animate-in slide-in-from-bottom-2">
-                    {reactionEmojis.map(emoji => (
-                      <button
-                        key={emoji}
-                        className="hover:bg-base-200 p-1.5 rounded-full transition-transform hover:scale-125 duration-200"
-                        onClick={() => handleToggleReaction(emoji)}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
+              {/* Enhanced Quick Actions Bar */}
+              <div className={`absolute bottom-[-24px] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-[50] ${itsMe ? 'right-0' : 'left-0'}`}>
+                <div className="flex bg-base-200/80 backdrop-blur-md border border-base-300 rounded-xl p-0.5 shadow-xl glass">
+                  <button onClick={() => setReplyingTo(message)} className="p-1.5 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-primary transition-colors" title="Reply">
+                    <FaReply size={10} />
+                  </button>
+
+                  <div className="dropdown dropdown-top dropdown-end">
+                    <label tabIndex={0} className="p-1.5 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-primary cursor-pointer flex items-center">
+                      <MdOutlineAddReaction size={12} />
+                    </label>
+                    <div tabIndex={0} className="dropdown-content z-[1] menu p-1 shadow-2xl bg-base-100 rounded-2xl flex flex-row gap-0.5 mb-2 border border-base-200 animate-in slide-in-from-bottom-2">
+                      {reactionEmojis.map(emoji => (
+                        <button
+                          key={emoji}
+                          className="hover:bg-base-200 p-2 rounded-xl transition-transform hover:scale-125 duration-200"
+                          onClick={() => handleToggleReaction(emoji)}
+                        >
+                          <span className="text-base">{emoji}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  <button onClick={handleToggleStar} className={`p-1.5 hover:bg-base-300 rounded-lg transition-colors ${isStarred ? 'text-warning' : 'text-base-content/60 hover:text-warning'}`} title={isStarred ? "Unstar" : "Star"}>
+                    {isStarred ? <FaStar size={11} /> : <FaRegStar size={11} />}
+                  </button>
+
+                  {(itsMe || isAdmin) && (
+                    <button onClick={() => deleteMessage(message._id)} className="p-1.5 hover:bg-error/10 rounded-lg text-base-content/60 hover:text-error transition-colors" title="Delete">
+                      <FaTrash size={10} />
+                    </button>
+                  )}
                 </div>
-
-                <button onClick={() => setReplyingTo(message)} className="hover:text-primary p-1" title="Reply">
-                  <FaReply size={12} />
-                </button>
-
-                <button onClick={() => setShowForward(true)} className="hover:text-primary p-1" title="Forward">
-                  <FaShare size={12} />
-                </button>
-
-                <button onClick={handleToggleStar} className="hover:text-warning p-1" title={isStarred ? "Unstar" : "Star"}>
-                  {isStarred ? <FaStar size={12} /> : <FaRegStar size={12} />}
-                </button>
-
-                {isEditable && (
-                  <button onClick={() => setEditingMessage(message)} className="hover:text-warning p-1" title="Edit Message">
-                    <FaPencilAlt size={12} />
-                  </button>
-                )}
-
-                {(itsMe || isAdmin) && (
-                  <button onClick={() => deleteMessage(message._id)} className="hover:text-error p-1" title={isAdmin && !itsMe ? "Admin: Delete Message" : "Unsend Message"}>
-                    <FaTrash size={12} />
-                  </button>
-                )}
               </div>
             </div>
 
-            {/* Reactions Display */}
+            {/* Reactions Display - Modern Chips */}
             {message.reactions?.length > 0 && (
-              <div className={`flex flex-wrap gap-1 mt-1 ${itsMe ? 'justify-end' : 'justify-start'}`}>
+              <div className={`flex flex-wrap gap-1 mt-1.5 ${itsMe ? 'justify-end' : 'justify-start'}`}>
                 {Object.entries(reactionsGrouped).map(([emoji, count]) => (
                   <div
                     key={emoji}
                     onClick={() => handleToggleReaction(emoji)}
-                    className="bg-base-200 border border-base-300 rounded-full px-1.5 py-0.5 text-[10px] cursor-pointer hover:bg-base-300 transition-colors flex items-center gap-1 shadow-sm"
+                    className="bg-base-100 border border-base-200 rounded-full px-2 py-0.5 text-[11px] cursor-pointer hover:bg-base-200 hover:scale-110 active:scale-95 transition-all flex items-center gap-1 shadow-sm font-black"
                   >
                     <span>{emoji}</span>
-                    {count > 1 && <span className="font-bold opacity-60 ml-0.5">{count}</span>}
+                    {count > 1 && <span className="opacity-40 text-[9px]">{count}</span>}
                   </div>
                 ))}
-              </div>
-            )}
-          </div>
-          <div className={`chat-footer opacity-50 text-[10px] mt-1 font-medium flex items-center gap-1 ${itsMe ? 'justify-end' : 'justify-start'}`}>
-            {formattedDate} {formattedTime}
-            {itsMe && (
-              <div className="flex items-center gap-0.5">
-                {selectedConversation?.isGroup ? (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowSeenBy(!showSeenBy)}
-                      className="flex items-center hover:text-blue-500 transition-colors"
-                    >
-                      {message.seenBy?.length > 0 ? (
-                        <span className="flex items-center gap-0.5 text-blue-500">
-                          <IoCheckmarkDoneOutline size={14} />
-                          <span>{message.seenBy.length}</span>
-                        </span>
-                      ) : (
-                        <IoCheckmarkOutline size={14} />
-                      )}
-                    </button>
-                    {showSeenBy && message.seenBy?.length > 0 && (
-                      <div className="absolute bottom-full right-0 mb-2 w-32 bg-base-200 border border-base-300 rounded-lg shadow-xl p-2 z-50 animate-in slide-in-from-bottom-1">
-                        <p className="font-bold text-[8px] uppercase opacity-50 mb-1">Seen by:</p>
-                        {message.seenBy.map((s, idx) => (
-                          <p key={idx} className="text-[9px] truncate">{s.userId?.fullname || "Unknown"}</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  message.seen ? (
-                    <IoCheckmarkDoneOutline className="text-blue-500 text-sm" />
-                  ) : (
-                    <IoCheckmarkOutline className="text-sm" />
-                  )
-                )}
               </div>
             )}
           </div>

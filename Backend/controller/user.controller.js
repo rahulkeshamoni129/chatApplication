@@ -1,6 +1,8 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
+import Log from "../models/log.model.js";
+import SystemConfig from "../models/systemConfig.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
 export const signup = async (req, res) => {
@@ -62,6 +64,17 @@ export const login = async (req, res) => {
             return res.status(403).json({ error: "Your account has been blocked by admin" });
         }
         const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: "Invalid credential" });
+        }
+        
+        // Log the activity
+        await Log.create({
+            userId: user._id,
+            action: "LOGIN",
+            details: `User ${user.username} logged in`
+        });
+
         //if user found generate a token so that user can acces the website
         createTokenAndSaveCookie(user._id, res);
         res.status(200).json({
@@ -102,16 +115,26 @@ export const allUsers = async (req, res) => {
 
         const filteredusers = await User.find({ _id: { $ne: loggedInUser } }).select("-password");
 
-        // Enhance with unread counts for each contact
+        // Enhance with unread counts and last message time for each contact
         const usersWithUnreads = await Promise.all(filteredusers.map(async (user) => {
             const count = await Message.countDocuments({
                 senderId: user._id,
                 receiverId: loggedInUser,
                 seen: false
             });
+
+            // Find the most recent message between these two users
+            const lastMsg = await Message.findOne({
+                $or: [
+                    { senderId: loggedInUser, receiverId: user._id },
+                    { senderId: user._id, receiverId: loggedInUser }
+                ]
+            }).sort({ createdAt: -1 }).select("createdAt").lean();
+
             return {
                 ...user.toObject(),
-                unreadCount: count
+                unreadCount: count,
+                lastMessageAt: lastMsg?.createdAt || null
             };
         }));
 
@@ -235,7 +258,24 @@ export const allGroups = async (req, res) => {
             isGroup: true
         }).sort({ updatedAt: -1 });
 
-        res.status(200).json(groups);
+        const groupsWithUnreads = await Promise.all(groups.map(async (group) => {
+            const count = await Message.countDocuments({
+                receiverId: group._id,
+                'seenBy.userId': { $ne: loggedInUser }
+            });
+
+            // Find the most recent message in this group
+            const lastMsg = await Message.findOne({ receiverId: group._id })
+                .sort({ createdAt: -1 }).select("createdAt").lean();
+
+            return {
+                ...group.toObject(),
+                unreadCount: count,
+                lastMessageAt: lastMsg?.createdAt || group.updatedAt || null
+            };
+        }));
+
+        res.status(200).json(groupsWithUnreads);
     } catch (error) {
         console.log("Error in allGroups: ", error);
         res.status(500).json({ error: "Internal server error" });
@@ -339,6 +379,46 @@ export const blockUser = async (req, res) => {
         });
     } catch (error) {
         console.log("Error in blockUser: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const getLogs = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) return res.status(403).json({ error: "Unauthorized" });
+        const logs = await Log.find().populate('userId', 'fullname username').sort({ createdAt: -1 }).limit(50);
+        res.status(200).json(logs);
+    } catch (error) {
+        console.log("Error in getLogs: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const getSystemConfig = async (req, res) => {
+    try {
+        let config = await SystemConfig.findOne();
+        if (!config) {
+            config = await SystemConfig.create({});
+        }
+        res.status(200).json(config);
+    } catch (error) {
+        console.log("Error in getSystemConfig: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const toggleMaintenance = async (req, res) => {
+    try {
+        if (!req.user.isAdmin) return res.status(403).json({ error: "Unauthorized" });
+        let config = await SystemConfig.findOne();
+        if (!config) config = await SystemConfig.create({});
+        
+        config.maintenanceMode = !config.maintenanceMode;
+        await config.save();
+        
+        res.status(200).json({ message: `Maintenance mode ${config.maintenanceMode ? 'ENABLED' : 'DISABLED'}`, maintenanceMode: config.maintenanceMode });
+    } catch (error) {
+        console.log("Error in toggleMaintenance: ", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

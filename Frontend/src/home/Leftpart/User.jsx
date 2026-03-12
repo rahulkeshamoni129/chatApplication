@@ -49,65 +49,68 @@ function User({ user }) {
 
   return (
     <div
-      className={`mx-4 rounded-xl cursor-pointer transition-all duration-200 ease-in-out border group ${isSelected
-        ? "bg-primary border-primary text-primary-content shadow-md scale-[1.02]"
-        : "bg-base-100 border-base-200 hover:bg-base-200 hover:border-base-300 shadow-sm"
+      className={`group relative mx-2 mb-1 px-3 py-3 rounded-2xl cursor-pointer transition-all duration-300 ease-out border-none hover:bg-primary/5 active:scale-[0.98] ${isSelected
+        ? "bg-primary shadow-xl shadow-primary/20 scale-[1.02]"
+        : "bg-transparent text-base-content/80"
         } ${user.isBlocked ? 'grayscale opacity-60' : ''}`}
       onClick={handleSelectUser}
     >
-      <div className='flex space-x-4 px-4 py-3 items-center relative'>
-        <div className={`avatar ${isOnline && !user.isGroup ? "avatar-online" : ""}`}>
-          <div className={`w-12 rounded-full border-2 ${isSelected ? "border-primary-content" : "border-base-300"}`}>
-            <img
-              src={user.isGroup
-                ? `https://api.dicebear.com/7.x/shapes/svg?seed=${user.fullname}`
-                : `https://api.dicebear.com/7.x/initials/svg?seed=${user.fullname}`}
-              alt="avatar"
-            />
+      <div className='flex gap-4 items-center relative z-10'>
+        <div className="relative">
+          <div className={`avatar ${isOnline && !user.isGroup ? "avatar-online" : ""}`}>
+            <div className={`w-12 h-12 rounded-2xl transition-transform duration-500 group-hover:rotate-3 ${isSelected ? "ring-2 ring-primary-content/50" : "ring-1 ring-base-300"}`}>
+              <img
+                src={user.isGroup
+                  ? `https://api.dicebear.com/7.x/shapes/svg?seed=${user.fullname}`
+                  : `https://api.dicebear.com/7.x/initials/svg?seed=${user.fullname}`}
+                alt="avatar"
+              />
+            </div>
           </div>
+          {isPinned && !isSelected && (
+            <div className="absolute -top-1 -left-1 bg-secondary text-secondary-content p-1 rounded-lg">
+               <BsPinAngleFill size={8} className="rotate-45" />
+            </div>
+          )}
         </div>
+        
         <div className='flex-1 flex justify-between items-center overflow-hidden'>
-          <div className="truncate">
-            <h1 className='font-bold text-sm truncate flex items-center gap-2'>
+          <div className="truncate pr-2">
+            <div className={`font-semibold text-[13px] truncate flex items-center gap-1.5 ${isSelected ? 'text-primary-content' : 'text-base-content'}`}>
               {user.fullname}
-              {user.isGroup && <span className="badge badge-xs badge-ghost text-[8px] opacity-60">GROUP</span>}
-              {user.isBlocked && <span className="text-[10px] text-error font-bold">BLOCKED</span>}
-              {isBlockedByMe && <span className="text-[10px] text-error font-bold italic underline">BLOCKED BY YOU</span>}
-              {isPinned && <BsPinAngleFill className="text-xs rotate-45 text-secondary" />}
-            </h1>
-            <span className={`text-xs truncate block ${isSelected ? "opacity-80" : "opacity-60"}`}>
-              {user.isGroup ? `${user.members.length} members` : `@${user.username}`}
-            </span>
+              {user.isGroup && <span className={`text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-md ${isSelected ? 'bg-primary-content/20 text-primary-content' : 'bg-base-300 text-base-content/50'}`}>Group</span>}
+            </div>
+            <div className={`text-[11px] font-bold truncate flex items-center gap-1 ${isSelected ? "text-primary-content/70" : "text-base-content/40"}`}>
+               {isOnline && !user.isGroup ? (
+                 <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
+               ) : null}
+               {user.isGroup ? `${user.members.length} members` : `@${user.username}`}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="relative flex flex-col items-end justify-center h-full min-w-[32px] shrink-0">
             {unreads[user._id] > 0 && (
-              <div className={`badge badge-sm ${isSelected ? "badge-outline text-primary-content" : "badge-secondary"}`}>
+              <div className={`transition-all duration-300 ${isSelected ? "bg-primary-content text-primary" : "bg-primary text-primary-content animate-bounce shadow-md"} min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[9px] font-black group-hover:opacity-0 group-hover:scale-0`}>
                 {unreads[user._id]}
               </div>
             )}
-
-            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-              {isAdmin && !user.isGroup && (
-                <button
-                  onClick={handleToggleBlock}
-                  className={`p-1 hover:scale-110 duration-200 ${user.isBlocked ? 'text-success' : 'text-error'}`}
-                  title={user.isBlocked ? "Unblock User" : "Block User"}
-                >
-                  <FaTrash size={12} />
-                </button>
-              )}
+            
+            <div className="absolute inset-y-0 right-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
               <button
                 onClick={handleTogglePin}
-                className={`p-1 hover:scale-110 duration-200 ${isSelected ? 'text-primary-content' : 'text-base-content/50 hover:text-primary'}`}
-                title={isPinned ? "Unpin Chat" : "Pin Chat"}
+                className={`p-1.5 rounded-xl transition-all active:scale-90 ${isSelected ? 'hover:bg-primary-content/10 text-primary-content font-bold' : 'hover:bg-base-300 text-base-content/30'}`}
+                title={isPinned ? "Unpin chat" : "Pin chat"}
               >
-                {isPinned ? <BsPinAngleFill size={14} className="rotate-45 text-secondary" /> : <BsPinAngle size={14} />}
+                {isPinned ? <BsPinAngleFill size={14} className="rotate-45" /> : <BsPinAngle size={14} />}
               </button>
             </div>
           </div>
         </div>
       </div>
+      
+      {isSelected && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary-content rounded-r-full"></div>
+      )}
     </div>
   )
 }

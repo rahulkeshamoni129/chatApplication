@@ -59,12 +59,16 @@ export const sendMessage = async (req, res) => {
 
         await Promise.all([conversation.save(), newMessage.save()]);
 
-        if (replyTo) {
-            await newMessage.populate({
+        await newMessage.populate([
+            {
+                path: 'senderId',
+                select: 'fullname username'
+            },
+            {
                 path: 'replyTo',
                 select: 'message senderId'
-            });
-        }
+            }
+        ]);
 
         // Socket broadcast
         conversation.members.forEach(memberId => {
@@ -98,6 +102,10 @@ export const getMessage = async (req, res) => {
         }).populate({
             path: 'messages',
             populate: [
+                {
+                    path: 'senderId',
+                    select: 'fullname username'
+                },
                 {
                     path: 'replyTo',
                     select: 'message senderId'
@@ -417,38 +425,21 @@ export const broadcastMessage = async (req, res) => {
             return res.status(403).json({ error: "Only admins can broadcast messages" });
         }
 
-        const allUsers = await User.find({ _id: { $ne: senderId } });
-        const results = [];
-
-        for (const user of allUsers) {
-            let conversation = await Conversation.findOne({
-                members: { $all: [senderId, user._id] },
-                isGroup: false
-            });
-
-            if (!conversation) {
-                conversation = await Conversation.create({
-                    members: [senderId, user._id]
-                });
-            }
-
-            const newMessage = new Message({
-                senderId,
-                receiverId: user._id,
-                message
-            });
-
-            conversation.messages.push(newMessage._id);
-            await Promise.all([conversation.save(), newMessage.save()]);
-
-            const receiverSocketId = getReceiverSocketId(user._id);
-            if (receiverSocketId) {
-                io.to(receiverSocketId).emit("newMessage", newMessage);
-            }
-            results.push(newMessage);
+        if (!message?.trim()) {
+            return res.status(400).json({ error: "Message cannot be empty" });
         }
 
-        res.status(200).json({ message: `Broadcast sent to ${results.length} users`, count: results.length });
+        // Emit a dedicated broadcast event to ALL connected sockets
+        // This does NOT create chat messages — it's an announcement only
+        const broadcastPayload = {
+            message,
+            sentBy: req.user.fullname || "Admin",
+            sentAt: new Date().toISOString(),
+        };
+
+        io.emit("broadcastAnnouncement", broadcastPayload);
+
+        res.status(200).json({ message: `Broadcast sent to all users`, payload: broadcastPayload });
     } catch (error) {
         console.log("Error in broadcastMessage: ", error);
         res.status(500).json({ error: "Internal server error" });
@@ -464,6 +455,22 @@ export const getStarredMessages = async (req, res) => {
         res.status(200).json(starredMessages);
     } catch (error) {
         console.log("Error in getStarredMessages: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const togglePinMessage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const message = await Message.findById(id);
+        if (!message) return res.status(404).json({ error: "Message not found" });
+
+        message.isPinned = !message.isPinned;
+        await message.save();
+
+        res.status(200).json({ message: `Message ${message.isPinned ? 'pinned' : 'unpinned'}`, isPinned: message.isPinned });
+    } catch (error) {
+        console.log("Error in togglePinMessage: ", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

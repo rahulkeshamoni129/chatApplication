@@ -1,82 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { BiLogOutCircle } from "react-icons/bi";
-import { FaSun, FaMoon } from "react-icons/fa";
-import { IoSettingsOutline } from "react-icons/io5";
-import axios from "axios";
-import Cookies from "js-cookie";
-import toast from 'react-hot-toast';
+import React from 'react';
 import { useTranslation } from '../../context/TranslationContext';
-import Settings from '../../components/Settings';
 import { useAuth } from '../../context/Authprovider';
-import { IoShieldCheckmarkOutline } from 'react-icons/io5';
-import { Link } from 'react-router-dom';
 
 function Logout() {
-  const [loading, setLoading] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark")
-  const { lang, setLang, t } = useTranslation();
+  const { lang, setLang } = useTranslation();
   const [authUser] = useAuth();
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  };
-
-  const handleLogout = async () => {
-    try {
-      setLoading(true)
-      const res = await axios.post("/api/users/logout")
-      localStorage.removeItem("chatApp")
-      Cookies.remove("jwt")
-      setLoading(false)
-      toast.success("Logged out successfully")
-      window.location.reload()
-    } catch (error) {
-      console.log("Error in Logout", error)
-      toast.error("Logout failed");
-    }
-  }
-
   return (
-    <div className='h-[10vh] px-4 flex justify-between items-center bg-base-300 border-t border-base-200'>
-      <div className='flex gap-2 items-center'>
-        <BiLogOutCircle className='text-4xl text-base-content hover:bg-base-200 duration-300 cursor-pointer rounded-full p-2' onClick={handleLogout} />
-        <span className="text-xs font-bold uppercase tracking-wider">{t('logout')}</span>
+    <div className='mt-auto p-4 bg-base-200/50 border-t border-base-300'>
+      {/* User Info Section */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="avatar">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-semibold ring ring-primary/20 ring-offset-base-100 ring-offset-2 overflow-hidden shadow-sm">
+              <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${authUser?.user?.fullname}`} alt="avatar" />
+            </div>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[13px] font-bold truncate text-base-content leading-tight">{authUser?.user?.fullname}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_5px_rgba(34,197,94,0.5)]"></span>
+              <p className="text-[9px] font-semibold opacity-40 uppercase tracking-widest">Online</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Language Selector - More compact and separated */}
+        <div className="flex flex-col items-end gap-0.5">
+            <div className="text-[8px] font-bold opacity-30 uppercase tracking-tighter">Lang</div>
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              className="select select-ghost select-xs text-[10px] font-bold px-1 h-6 min-h-6 bg-base-300/30 rounded border-none focus:outline-none appearance-none cursor-pointer"
+            >
+              <option value="en">EN</option>
+              <option value="hi">HI</option>
+              <option value="es">ES</option>
+            </select>
+        </div>
       </div>
-
-      <div className="flex items-center gap-1">
-        {/* Language Selector */}
-        <select
-          value={lang}
-          onChange={(e) => setLang(e.target.value)}
-          className="select select-ghost select-xs text-[10px] focus:outline-none"
-        >
-          <option value="en">EN</option>
-          <option value="hi">हि</option>
-          <option value="es">ES</option>
-        </select>
-
-        {authUser?.user?.isAdmin && (
-          <Link to="/admin" className="btn btn-ghost btn-xs btn-circle text-xl text-warning hover:bg-base-200" title="Admin Control Dashboard">
-            <IoShieldCheckmarkOutline />
-          </Link>
-        )}
-
-        <button onClick={() => setShowSettings(true)} className="btn btn-ghost btn-xs btn-circle text-xl text-base-content hover:bg-base-200" title="Settings">
-          <IoSettingsOutline />
-        </button>
-
-        <button onClick={toggleTheme} className="btn btn-ghost btn-xs btn-circle text-xl text-base-content hover:bg-base-200">
-          {theme === "dark" ? <FaSun className="text-warning" /> : <FaMoon className="text-primary" />}
-        </button>
-      </div>
-
-      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
     </div>
   )
 }

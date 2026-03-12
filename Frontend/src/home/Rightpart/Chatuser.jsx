@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import useConversation from "../../zustand/useConversation.js";
 import { useSocketcontext } from '../../context/SocketContext.jsx';
 import { useAuth } from '../../context/Authprovider.jsx';
@@ -116,42 +117,53 @@ function Chatuser() {
   const activeLastSeen = offlineUpdates?.[selectedConversation._id] || selectedConversation.lastSeen;
 
   return (
-    <div className="relative bg-base-300 h-[10vh] border-b border-base-200 shadow-sm flex items-center justify-between px-6 lg:px-10">
+    <div className="relative bg-base-100/70 backdrop-blur-xl h-[10vh] border-b border-base-200 shadow-sm flex items-center justify-between px-6 lg:px-10 z-[100]">
 
       <div className="flex items-center gap-4">
-        <label htmlFor="my-drawer-2" className="btn btn-ghost btn-xs btn-circle lg:hidden">
-          <CiMenuFries className="text-white text-xl" />
+        <label htmlFor="my-drawer-2" className="btn btn-ghost btn-sm btn-circle lg:hidden">
+          <CiMenuFries size={20} />
         </label>
 
-        <div className={`avatar ${!selectedConversation.isGroup && getOnlineUsersStatus(selectedConversation._id) === "online" ? "avatar-online" : ""}`}>
-          <div className="w-10 rounded-full border border-primary">
-            <img
-              src={selectedConversation.isGroup
-                ? `https://api.dicebear.com/7.x/shapes/svg?seed=${selectedConversation.fullname}`
-                : `https://api.dicebear.com/7.x/initials/svg?seed=${selectedConversation.fullname}`}
-              alt="avatar"
-            />
+        <div className="relative group cursor-pointer" onClick={() => !selectedConversation.isGroup && setShowUserInfo(true)}>
+          <div className={`avatar ${!selectedConversation.isGroup && onlineUsers.includes(selectedConversation._id) ? "avatar-online" : ""}`}>
+            <div className="w-11 h-11 rounded-2xl ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all duration-300 overflow-hidden">
+              <img
+                src={selectedConversation.isGroup
+                  ? `https://api.dicebear.com/7.x/shapes/svg?seed=${selectedConversation.fullname}`
+                  : `https://api.dicebear.com/7.x/initials/svg?seed=${selectedConversation.fullname}`}
+                alt="avatar"
+              />
+            </div>
           </div>
         </div>
+        
         {!showSearch && (
-          <div className="text-left flex flex-col justify-center animate-in fade-in duration-300">
-            <h1 className="text-sm font-bold flex items-center gap-2">
+          <div className="text-left flex flex-col justify-center animate-in fade-in slide-in-from-left-2 duration-500">
+            <h1 className="text-[15px] font-black tracking-tight flex items-center gap-2">
               {selectedConversation.fullname}
-              {isBlockedByMe && <span className="badge badge-error badge-xs text-[8px]">BLOCKED</span>}
+              {isBlockedByMe && <span className="bg-error/10 text-error text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase">Blocked</span>}
             </h1>
-            <span className="text-[10px] text-base-content opacity-70">
-              {typing ? (
-                <span className="text-primary font-medium animate-pulse">
-                  {selectedConversation.isGroup ? "Someone is typing..." : "typing..."}
-                </span>
-              ) : (
-                selectedConversation.isGroup
-                  ? `${selectedConversation.members.length} members`
-                  : onlineUsers.includes(selectedConversation._id)
-                    ? "online"
-                    : formatLastSeen(activeLastSeen)
-              )}
-            </span>
+            <div className="flex items-center gap-2">
+               {typing ? (
+                 <div className="flex items-center gap-1.5">
+                   <span className="flex gap-0.5">
+                     <span className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                     <span className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                     <span className="w-1 h-1 bg-primary rounded-full animate-bounce"></span>
+                   </span>
+                   <span className="text-[10px] text-primary font-bold uppercase tracking-widest">{selectedConversation.isGroup ? "Someone is typing" : "Typing"}</span>
+                 </div>
+               ) : (
+                 <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${onlineUsers.includes(selectedConversation._id) ? "text-success" : "opacity-40"}`}>
+                   {onlineUsers.includes(selectedConversation._id) && !selectedConversation.isGroup && <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>}
+                   {selectedConversation.isGroup
+                     ? `${selectedConversation.members.length} members`
+                     : onlineUsers.includes(selectedConversation._id)
+                       ? "online"
+                       : formatLastSeen(activeLastSeen)}
+                 </span>
+               )}
+            </div>
           </div>
         )}
       </div>
@@ -220,39 +232,41 @@ function Chatuser() {
         <GroupSettings group={selectedConversation} onClose={() => setShowGroupSettings(false)} onUpdate={(updatedGroup) => setSelectedConversation(updatedGroup)} />
       )}
 
-      {showUserInfo && (
-        <dialog id="user_info_modal" className="modal modal-open">
-          <div className="modal-box glass bg-base-300 border border-white/10 shadow-2xl">
-            <h3 className="font-bold text-lg mb-4 text-primary flex items-center gap-2">
-              <IoInformationCircleOutline size={24} />
-              User Information
-            </h3>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-4 bg-base-200/50 p-4 rounded-xl border border-white/5">
-                <div className="avatar">
-                  <div className="w-16 rounded-full border-2 border-primary">
-                    <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedConversation.fullname}`} alt="avatar" />
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-bold text-xl">{selectedConversation.fullname}</h4>
-                  <p className="text-xs opacity-50">@{selectedConversation.username}</p>
+      {showUserInfo && createPortal(
+        <dialog id="user_info_modal" className="modal modal-open" style={{ zIndex: 9999 }}>
+          <div className="modal-box bg-base-100 border border-base-200 shadow-2xl rounded-3xl p-0 overflow-hidden max-w-sm">
+            {/* Header banner */}
+            <div className="bg-primary/5 border-b border-base-200 px-6 pt-6 pb-5 flex items-center gap-4">
+              <div className="avatar">
+                <div className="w-16 h-16 rounded-2xl border-2 border-primary/20 overflow-hidden shadow-lg">
+                  <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${selectedConversation.fullname}`} alt="avatar" />
                 </div>
               </div>
-
-              <div className="bg-base-200/50 p-4 rounded-xl border border-white/5">
-                <h4 className="text-xs font-bold uppercase opacity-50 mb-1 tracking-wider">About</h4>
-                <p className="text-sm leading-relaxed">{selectedConversation.bio || "Hey there! I am using this chat app."}</p>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-bold text-[17px] truncate">{selectedConversation.fullname}</h4>
+                <p className="text-xs opacity-40 font-bold mt-0.5">@{selectedConversation.username}</p>
               </div>
+              <button
+                onClick={() => setShowUserInfo(false)}
+                className="btn btn-ghost btn-sm btn-circle text-base-content/40 hover:text-base-content shrink-0"
+              >
+                <IoClose size={18} />
+              </button>
             </div>
-            <div className="modal-action">
-              <button className="btn btn-sm" onClick={() => setShowUserInfo(false)}>Close</button>
+
+            {/* Body */}
+            <div className="p-5 flex flex-col gap-3">
+              <div className="bg-base-200/50 p-4 rounded-2xl border border-base-200">
+                <h5 className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1.5">About</h5>
+                <p className="text-sm leading-relaxed text-base-content/80">{selectedConversation.bio || "Hey there! I am using this chat app."}</p>
+              </div>
             </div>
           </div>
           <form method="dialog" className="modal-backdrop" onClick={() => setShowUserInfo(false)}>
             <button>close</button>
           </form>
-        </dialog>
+        </dialog>,
+        document.body
       )}
     </div>
   );

@@ -10,7 +10,7 @@ function StarredMessages({ onClose }) {
   useEffect(() => {
     const fetchStarred = async () => {
       try {
-        const res = await axios.get('/api/messages/starred');
+        const res = await axios.get('/api/message/starred');
         setMessages(res.data);
       } catch (error) {
         console.log("Error fetching starred messages:", error);
@@ -22,61 +22,53 @@ function StarredMessages({ onClose }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-base-100 w-full max-w-2xl max-h-[80vh] rounded-3xl overflow-hidden shadow-2xl border border-base-200 flex flex-col animate-in zoom-in-95 duration-300">
-        
-        {/* Header */}
-        <div className="bg-warning text-warning-content p-6 flex justify-between items-center shadow-md z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-black/10 rounded-xl">
-                <IoStar size={24} />
+    <div className="flex flex-col h-[400px]">
+        {/* Sub-Header */}
+        <div className="flex items-center gap-3 mb-4 p-3 bg-warning/10 rounded-2xl border border-warning/20">
+            <div className="p-2 bg-warning text-warning-content rounded-xl shadow-sm">
+                <IoStar size={20} />
             </div>
             <div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Starred Messages</h2>
-                <p className="text-xs font-bold opacity-70">Your personal collection of important notes</p>
+                <h2 className="text-sm font-black uppercase tracking-tight text-warning">Important Notes</h2>
+                <p className="text-[10px] font-bold opacity-60">Your bookmarked messages</p>
             </div>
-          </div>
-          <button onClick={onClose} className="btn btn-circle btn-sm btn-ghost hover:bg-black/20">
-             <IoClose size={24} />
-          </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 overflow-y-auto bg-base-200 flex-1 flex flex-col gap-3">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar">
           {loading ? (
-             <div className="flex justify-center items-center h-48">
-                 <Loading />
+             <div className="flex justify-center items-center h-full">
+                 <div className="loading loading-spinner loading-lg text-primary opacity-20"></div>
              </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 opacity-30 gap-4">
+            <div className="flex flex-col items-center justify-center h-full opacity-10 gap-4">
                 <IoStar size={80} />
-                <p className="font-black text-xl">No starred messages yet</p>
+                <p className="font-black text-xl tracking-[0.3em] uppercase">Empty</p>
             </div>
           ) : (
             messages.map((msg) => (
-                <div key={msg._id} className="bg-base-100 p-4 rounded-2xl border border-base-300 shadow-sm hover:border-warning/50 transition-all group">
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2">
-                            <div className="avatar">
-                                <div className="w-6 rounded-full">
-                                    <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${msg.senderId?.fullname}`} alt="avatar" />
-                                </div>
+                <div key={msg._id} className="bg-base-200/40 p-5 rounded-[1.5rem] border border-base-300/50 hover:border-primary/30 transition-all hover:bg-base-200 group relative">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-xs">
+                                {msg.senderId?.fullname?.charAt(0) || "?"}
                             </div>
-                            <span className="text-xs font-black opacity-80">{msg.senderId?.fullname || "Unknown"}</span>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-black tracking-tight">{msg.senderId?.fullname || "Unknown User"}</span>
+                                <span className="text-[9px] opacity-40 font-bold uppercase tracking-wider">{new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1 text-[10px] opacity-40 font-bold uppercase">
-                            <IoTimeOutline />
-                            {new Date(msg.createdAt).toLocaleDateString()}
+                        <div className="p-1.5 bg-warning/10 text-warning rounded-lg opacity-40 group-hover:opacity-100 transition-opacity">
+                            <IoStar size={14} />
                         </div>
                     </div>
-                    <p className="text-sm font-medium leading-relaxed italic border-l-4 border-warning/30 pl-3 py-1 bg-warning/5 rounded-r-lg">
-                        "{msg.message}"
+                    <p className="text-sm font-medium leading-relaxed opacity-80 pl-11">
+                        {msg.message}
                     </p>
                 </div>
             ))
           )}
         </div>
-      </div>
     </div>
   );
 }

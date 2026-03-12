@@ -1,10 +1,12 @@
 import { useEffect } from 'react'
 import { useSocketcontext } from './SocketContext.jsx'
 import useConversation from '../zustand/useConversation.js'
+import { useAuth } from './Authprovider.jsx'
 
 const useGetSocketMessage = () => {
     const { socket } = useSocketcontext()
-    const { setMessage, selectedConversation, addUnread, updateMessage } = useConversation()
+    const { setMessage, selectedConversation, addUnread, updateMessage, bumpConversation } = useConversation()
+    const [authUser] = useAuth();
 
     useEffect(() => {
         if (!socket) return;
@@ -20,6 +22,13 @@ const useGetSocketMessage = () => {
                     convId === newMessage.receiverId
                 );
 
+            // Bump the conversation to the top of the list regardless of which chat it's in
+            const bumpId = isCurrentChat
+                ? (selectedConversation.isGroup ? newMessage.receiverId : newMessage.senderId)
+                : (newMessage.receiverId === authUser.user?._id ? newMessage.senderId : newMessage.receiverId);
+
+            bumpConversation(bumpId);
+
             if (isCurrentChat) {
                 // Use functional updater via Zustand to avoid stale closure
                 setMessage(prev => {
@@ -28,8 +37,13 @@ const useGetSocketMessage = () => {
                     return [...prev, newMessage];
                 });
             } else {
-                // Increment unread badge for sender or group
-                addUnread(newMessage.receiverId || newMessage.senderId);
+                // If receiverId is ME, it's a private chat, so use senderId for the badge
+                // If receiverId is a Group, use receiverId for the badge
+                const badgeId = (newMessage.receiverId === authUser.user?._id) 
+                    ? newMessage.senderId 
+                    : newMessage.receiverId;
+                
+                addUnread(badgeId);
             }
         });
 

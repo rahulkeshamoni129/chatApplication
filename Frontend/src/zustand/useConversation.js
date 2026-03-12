@@ -10,7 +10,9 @@ const useConversation = create((set) => ({
   })),
 
   unreads: {},
-  setUnreads: (unreads) => set({ unreads }),
+  setUnreads: (updater) => set((state) => ({
+    unreads: typeof updater === 'function' ? updater(state.unreads) : updater
+  })),
   addUnread: (userId) => set((state) => ({
     unreads: { ...state.unreads, [userId]: (state.unreads[userId] || 0) + 1 }
   })),
@@ -41,6 +43,15 @@ const useConversation = create((set) => ({
   }),
 
   sidebarSearch: "",
-  setSidebarSearch: (sidebarSearch) => set({ sidebarSearch })
+  setSidebarSearch: (sidebarSearch) => set({ sidebarSearch }),
+
+  // Tracks timestamp of last activity per conversation ID
+  lastMessageAt: {},
+  bumpConversation: (convId) => set((state) => ({
+    lastMessageAt: { ...state.lastMessageAt, [convId]: Date.now() }
+  })),
+  seedLastMessageAt: (convId, timestamp) => set((state) => ({
+    lastMessageAt: { ...state.lastMessageAt, [convId]: new Date(timestamp).getTime() }
+  })),
 }))
 export default useConversation
