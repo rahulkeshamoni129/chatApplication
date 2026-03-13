@@ -5,6 +5,19 @@ import Log from "../models/log.model.js";
 import SystemConfig from "../models/systemConfig.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
+
+export const updatePublicKey = async (req, res) => {
+    try {
+        const { publicKey, encryptedPrivateKey } = req.body;
+        const userId = req.user._id;
+        await User.findByIdAndUpdate(userId, { publicKey, encryptedPrivateKey });
+        res.status(200).json({ message: "Security keys updated successfully" });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 export const signup = async (req, res) => {
     const { fullname, username, email, password, confirmPassword } = req.body;
     try {
@@ -44,7 +57,9 @@ export const signup = async (req, res) => {
                     email: newUser.email,
                     bio: newUser.bio,
                     isAdmin: newUser.isAdmin,
-                    pinnedChats: newUser.pinnedChats
+                    pinnedChats: newUser.pinnedChats,
+                    publicKey: newUser.publicKey,
+                    encryptedPrivateKey: newUser.encryptedPrivateKey
                 }
             })
         }
@@ -85,7 +100,9 @@ export const login = async (req, res) => {
                 email: user.email,
                 bio: user.bio,
                 isAdmin: user.isAdmin,
-                pinnedChats: user.pinnedChats
+                pinnedChats: user.pinnedChats,
+                publicKey: user.publicKey,
+                encryptedPrivateKey: user.encryptedPrivateKey
             }
         });
 

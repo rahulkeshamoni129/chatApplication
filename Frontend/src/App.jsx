@@ -11,6 +11,7 @@ import useConversation from "./zustand/useConversation";
 import { useEffect } from "react";
 import useGetSocketMessage from "./context/useGetSocketMessage";
 import AdminDashboard from "./components/AdminDashboard";
+import SecuritySync from "./components/SecuritySync";
 import useTheme from "./zustand/useTheme";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
   console.log(authUser);
   return (
     <>
+      <SecuritySync />
       <Routes>
         <Route
           path="/"

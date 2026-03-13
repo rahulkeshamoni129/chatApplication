@@ -9,13 +9,44 @@ import useDeleteMessage from '../../context/useDeleteMessage.js'
 import useConversation from '../../zustand/useConversation.js'
 import ForwardModal from '../../components/ForwardModal'
 
+import { decryptMessage } from '../../utils/cryptoUtils'
+import { useEffect } from 'react'
+
 function Message({ message }) {
   const authUser = JSON.parse(localStorage.getItem('chatApp'))
   const { setEditingMessage, setReplyingTo, updateMessage, selectedConversation } = useConversation();
   const [showForward, setShowForward] = useState(false);
   const [showSeenBy, setShowSeenBy] = useState(false);
+  const [decryptedContent, setDecryptedContent] = useState(message.message);
+  const [decryptedReply, setDecryptedReply] = useState(message.replyTo?.message);
+  
   const senderId = message.senderId?._id || message.senderId;
   const itsMe = senderId === authUser.user._id;
+
+  // E2EE: Decrypt message and reply on arrival
+  useEffect(() => {
+    const decrypt = async () => {
+      const privKey = localStorage.getItem(`e2ee_private_key_${authUser.user._id}`);
+
+      // Decrypt main message
+      if (message.message?.startsWith("__E2EE__")) {
+        const result = await decryptMessage(message.message, privKey, itsMe);
+        setDecryptedContent(result);
+      } else {
+        setDecryptedContent(message.message);
+      }
+
+      // Decrypt reply if present
+      if (message.replyTo?.message?.startsWith("__E2EE__")) {
+        const result = await decryptMessage(message.replyTo.message, privKey, message.replyTo.senderId === authUser.user._id);
+        setDecryptedReply(result);
+      } else {
+        setDecryptedReply(message.replyTo?.message);
+      }
+    };
+    decrypt();
+  }, [message.message, message.replyTo?.message, authUser.user._id]);
+
   const isAdmin = authUser.user.isAdmin;
   const { deleteMessage } = useDeleteMessage();
   const isStarred = message.starredBy?.includes(authUser.user._id);
@@ -74,12 +105,12 @@ function Message({ message }) {
                   <p className="font-black opacity-60 truncate">
                     {message.replyTo.senderId === authUser.user._id ? "You" : "Them"}
                   </p>
-                  <p className="truncate italic">"{message.replyTo.message}"</p>
+                  <p className="truncate italic">"{decryptedReply || "[Message Unreadable]"}"</p>
                 </div>
               )}
               
               <div className="whitespace-pre-wrap break-words inline-block min-w-[20px]">
-                {message.message}
+                {decryptedContent}
                 {message.edited && (
                   <span className="text-[9px] opacity-50 ml-2 font-black italic uppercase tracking-tighter">Edited</span>
                 )}

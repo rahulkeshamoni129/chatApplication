@@ -12,20 +12,23 @@ const useGetSocketMessage = () => {
         if (!socket) return;
 
         socket.on("newMessage", (newMessage) => {
+            const senderId = newMessage.senderId?._id || newMessage.senderId;
+            const receiverId = newMessage.receiverId?._id || newMessage.receiverId;
             const convId = selectedConversation?._id;
+
             const isCurrentChat =
                 convId &&
                 (
                     // 1-on-1: the sender is the person we're chatting with
-                    convId === newMessage.senderId ||
+                    convId === senderId ||
                     // Group: the group id matches receiverId
-                    convId === newMessage.receiverId
+                    convId === receiverId
                 );
 
             // Bump the conversation to the top of the list regardless of which chat it's in
             const bumpId = isCurrentChat
-                ? (selectedConversation.isGroup ? newMessage.receiverId : newMessage.senderId)
-                : (newMessage.receiverId === authUser.user?._id ? newMessage.senderId : newMessage.receiverId);
+                ? (selectedConversation.isGroup ? receiverId : senderId)
+                : (receiverId === authUser.user?._id ? senderId : receiverId);
 
             bumpConversation(bumpId);
 
@@ -39,9 +42,9 @@ const useGetSocketMessage = () => {
             } else {
                 // If receiverId is ME, it's a private chat, so use senderId for the badge
                 // If receiverId is a Group, use receiverId for the badge
-                const badgeId = (newMessage.receiverId === authUser.user?._id) 
-                    ? newMessage.senderId 
-                    : newMessage.receiverId;
+                const badgeId = (receiverId === authUser.user?._id) 
+                    ? senderId 
+                    : receiverId;
                 
                 addUnread(badgeId);
             }

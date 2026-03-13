@@ -1,5 +1,10 @@
 import express from "express";
-import { allUsers, login, logout, signup, updateProfile, changePassword, togglePinChat, createGroup, allGroups, toggleBlockUser, blockUser, addGroupMember, removeGroupMember, getLogs, getSystemConfig, toggleMaintenance } from "../controller/user.controller.js";
+import { 
+    allUsers, login, logout, signup, updateProfile, changePassword, 
+    togglePinChat, createGroup, allGroups, toggleBlockUser, blockUser, 
+    addGroupMember, removeGroupMember, getLogs, getSystemConfig, 
+    toggleMaintenance, updatePublicKey 
+} from "../controller/user.controller.js";
 import secureRoute from "../middleware/secureRoute.js";
 const router = express.Router();
 router.post("/signup", signup)
@@ -7,6 +12,7 @@ router.post("/login", login)
 router.post("/logout", logout);
 router.get("/allusers", secureRoute, allUsers);
 router.get("/allgroups", secureRoute, allGroups);
+router.put("/update-public-key", secureRoute, updatePublicKey);
 
 // Management Routes
 router.put("/update", secureRoute, updateProfile);

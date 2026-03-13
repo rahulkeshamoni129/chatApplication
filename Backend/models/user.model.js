@@ -43,7 +43,14 @@ const userSchema = mongoose.Schema({
     }],
     lastSeen: {
         type: Date
-        // Removed default: Date.now to prevent Mongoose from spoofing the current time for old accounts
+    },
+    publicKey: {
+        type: String,
+        default: null
+    },
+    encryptedPrivateKey: {
+        type: String,
+        default: null
     }
 }, { timestamps: true })//createdAt when the user is created & updatedAt when latest updated like password
 
