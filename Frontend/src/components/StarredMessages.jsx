@@ -2,24 +2,45 @@ import React, { useState, useEffect } from 'react';
 import { IoClose, IoStar, IoTimeOutline, IoPersonOutline } from 'react-icons/io5';
 import axios from 'axios';
 import Loading from './Loading';
+import { decryptMessage } from '../utils/cryptoUtils.js';
+import { useAuth } from '../context/Authprovider.jsx';
 
 function StarredMessages({ onClose }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [authUser] = useAuth();
 
   useEffect(() => {
     const fetchStarred = async () => {
       try {
         const res = await axios.get('/api/message/starred');
-        setMessages(res.data);
+        const rawMessages = res.data;
+        
+        // Decrypt messages if encoded
+        const privKey = sessionStorage.getItem(`e2ee_private_key_${authUser?.user?._id}`);
+        const processed = await Promise.all(rawMessages.map(async (msg) => {
+            if (msg.message?.startsWith("__E2EE__") && privKey) {
+                try {
+                    const senderId = msg.senderId?._id || msg.senderId;
+                    const itsMe = senderId === authUser?.user?._id;
+                    const decoded = await decryptMessage(msg.message, privKey, itsMe);
+                    return { ...msg, message: decoded };
+                } catch (e) {
+                    return { ...msg, message: "[Decryption Error]" };
+                }
+            }
+            return msg;
+        }));
+
+        setMessages(processed);
       } catch (error) {
         console.log("Error fetching starred messages:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchStarred();
-  }, []);
+    if (authUser?.user?._id) fetchStarred();
+  }, [authUser?.user?._id]);
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

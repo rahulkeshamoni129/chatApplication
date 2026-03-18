@@ -64,7 +64,10 @@ function CreateGroup({ onClose }) {
                                             <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.fullname}`} alt="" />
                                         </div>
                                     </div>
-                                    <span className="text-sm font-medium">{user.fullname}</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium leading-tight">{user.fullname}</span>
+                                        <span className="text-[10px] opacity-40 font-bold">@{user.username}</span>
+                                    </div>
                                 </div>
                                 <input
                                     type="checkbox"

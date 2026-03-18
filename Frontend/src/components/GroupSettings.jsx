@@ -67,9 +67,18 @@ function GroupSettings({ group, onClose, onUpdate }) {
                         <div className="w-10 h-10 rounded-2xl overflow-hidden border border-primary/20">
                             <img src={`https://api.dicebear.com/7.x/shapes/svg?seed=${group.groupName}`} alt="group" />
                         </div>
-                        <div>
-                            <h2 className="text-[15px] font-bold">{group.groupName}</h2>
-                            <p className="text-[10px] opacity-40 font-bold uppercase tracking-widest">{group.members.length} members</p>
+                        <div className="flex flex-col">
+                            <h2 className="text-[15px] font-bold leading-tight">{group.groupName}</h2>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <p className="text-[9px] opacity-40 font-black uppercase tracking-widest">{group.members.length} members</p>
+                                <span className="w-1 h-1 bg-base-300 rounded-full"></span>
+                                <button 
+                                    onClick={() => { navigator.clipboard.writeText(group._id); toast.success("Group ID copied!"); }}
+                                    className="text-[9px] font-mono opacity-30 hover:opacity-100 hover:text-primary transition-all font-bold group"
+                                >
+                                    ID: {group._id.substring(0, 8)}...
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <button onClick={onClose} className="btn btn-circle btn-sm btn-ghost">
@@ -97,7 +106,10 @@ function GroupSettings({ group, onClose, onUpdate }) {
                                 <div key={user._id} className="flex justify-between items-center p-2.5 hover:bg-base-200 rounded-2xl transition-colors">
                                     <div className="flex items-center gap-3">
                                         <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.fullname}`} className="w-9 h-9 rounded-xl" alt="" />
-                                        <span className="text-sm font-semibold">{user.fullname}</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-semibold leading-tight">{user.fullname}</span>
+                                            <span className="text-[10px] opacity-40 font-bold">@{user.username}</span>
+                                        </div>
                                     </div>
                                     <button onClick={() => handleAddMember(user._id)} className="btn btn-xs btn-ghost btn-circle text-primary hover:bg-primary/10">
                                         <IoPersonAddOutline size={18} />

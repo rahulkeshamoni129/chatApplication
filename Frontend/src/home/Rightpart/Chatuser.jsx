@@ -158,7 +158,11 @@ function Chatuser() {
                        <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${onlineUsers.includes(selectedConversation._id) ? "text-success" : "opacity-40"}`}>
                          {onlineUsers.includes(selectedConversation._id) && !selectedConversation.isGroup && <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></span>}
                          {selectedConversation.isGroup
-                           ? `${selectedConversation.members.length} members`
+                           ? (() => {
+                               const membersCount = selectedConversation.members?.length || 0;
+                               const onlineCount = selectedConversation.members?.filter(m => onlineUsers.includes(m)).length || 0;
+                               return `${membersCount} members, ${onlineCount} online`;
+                             })()
                            : onlineUsers.includes(selectedConversation._id)
                              ? "online"
                              : formatLastSeen(activeLastSeen)}
@@ -266,6 +270,14 @@ function Chatuser() {
               <div className="bg-base-200/50 p-4 rounded-2xl border border-base-200">
                 <h5 className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1.5">About</h5>
                 <p className="text-sm leading-relaxed text-base-content/80">{selectedConversation.bio || "Hey there! I am using this chat app."}</p>
+              </div>
+
+               <div className="bg-base-200/50 p-4 rounded-2xl border border-base-200 group/id cursor-pointer" onClick={() => {
+                 navigator.clipboard.writeText(selectedConversation._id);
+                 toast.success("Chat ID copied!");
+               }}>
+                <h5 className="text-[9px] font-black uppercase tracking-widest opacity-30 mb-1.5">Chat ID</h5>
+                <p className="text-[10px] font-mono opacity-60 group-hover:text-primary transition-colors truncate">{selectedConversation._id}</p>
               </div>
             </div>
           </div>

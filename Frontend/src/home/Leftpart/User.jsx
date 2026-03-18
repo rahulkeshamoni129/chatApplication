@@ -93,7 +93,19 @@ function User({ user }) {
           <div className="truncate pr-2">
             <div className={`font-semibold text-[13px] truncate flex items-center gap-1.5 ${isSelected ? 'text-primary-content' : 'text-base-content'}`}>
               {user.fullname}
-              {user.isGroup && <span className={`text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-md ${isSelected ? 'bg-primary-content/20 text-primary-content' : 'bg-base-300 text-base-content/50'}`}>Group</span>}
+              {user.isGroup ? (
+                <span className={`text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-md ${
+                  isSelected ? 'bg-primary-content/20 text-primary-content' : 'bg-base-300 text-base-content/50'
+                }`}>
+                  {user.groupAdmin === authUser?.user?._id ? "Admin" : "Group"}
+                </span>
+              ) : user.isAdmin ? (
+                <span className={`text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-md ${
+                  isSelected ? 'bg-primary-content/20 text-primary-content' : 'bg-info/20 text-info'
+                }`}>
+                  Staff
+                </span>
+              ) : null}
             </div>
             <div className={`text-[11px] font-bold truncate flex items-center gap-1 ${isSelected ? "text-primary-content/70" : "text-base-content/40"}`}>
                {isOnline && !user.isGroup ? (

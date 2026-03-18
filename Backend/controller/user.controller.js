@@ -6,6 +6,8 @@ import mongoose from "mongoose";
 import SystemConfig from "../models/systemConfig.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
+import { io } from "../SockedIo/server.js";
+import getReceiverSocketId from "../SockedIo/server.js";
 
 export const updatePublicKey = async (req, res) => {
     try {
@@ -382,6 +384,16 @@ export const deleteGroup = async (req, res) => {
 
         if (!isGroupAdmin && !isSystemAdmin) {
             return res.status(403).json({ error: "Only group admin or system admin can delete the group" });
+        }
+
+        // Notify all members via socket that the group is being deleted
+        if (group.members && group.members.length > 0) {
+            group.members.forEach(memberId => {
+                const socketId = getReceiverSocketId(memberId);
+                if (socketId) {
+                    io.to(socketId).emit("groupDeleted", groupId);
+                }
+            });
         }
 
         // Delete all messages associated with this group

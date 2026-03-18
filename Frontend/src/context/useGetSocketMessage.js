@@ -3,10 +3,14 @@ import { useSocketcontext } from './SocketContext.jsx'
 import useConversation from '../zustand/useConversation.js'
 import { useAuth } from './Authprovider.jsx'
 import { decryptMessage } from '../utils/cryptoUtils.js'
+import toast from 'react-hot-toast'
 
 const useGetSocketMessage = () => {
     const { socket } = useSocketcontext()
-    const { setMessage, selectedConversation, addUnread, updateMessage, bumpConversation } = useConversation()
+    const { 
+        setMessage, selectedConversation, setSelectedConversation,
+        addUnread, updateMessage, bumpConversation 
+    } = useConversation()
     const [authUser] = useAuth();
 
     useEffect(() => {
@@ -120,6 +124,17 @@ const useGetSocketMessage = () => {
             ));
         });
 
+        socket.on("groupDeleted", (groupId) => {
+            if (selectedConversation?._id === groupId) {
+                setSelectedConversation(null);
+                toast.error("This group has been deleted by an admin.");
+                setTimeout(() => window.location.reload(), 3000);
+            } else {
+                // For other users, just refresh
+                window.location.reload();
+            }
+        });
+
         return () => {
             socket.off("newMessage")
             socket.off("messageDeleted")
@@ -127,6 +142,7 @@ const useGetSocketMessage = () => {
             socket.off("messageEdited")
             socket.off("messageReaction")
             socket.off("groupMessagesSeen")
+            socket.off("groupDeleted")
         }
     }, [socket, selectedConversation]) // Removed `messages` from deps - use functional updater instead
 }
