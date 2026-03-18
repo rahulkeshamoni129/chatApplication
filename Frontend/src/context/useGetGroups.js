@@ -12,12 +12,8 @@ function useGetGroups() {
         const getGroups = async () => {
             setLoading(true)
             try {
-                const token = Cookies.get("jwt");
                 const response = await axios.get("/api/users/allgroups", {
-                    withCredentials: true,
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                    withCredentials: true
                 })
                 setGroups(response.data);
 

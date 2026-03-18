@@ -3,6 +3,7 @@ import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import Log from "../models/log.model.js";
 import SystemConfig from "../models/systemConfig.model.js";
+import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
 
@@ -283,10 +284,11 @@ export const createGroup = async (req, res) => {
 export const allGroups = async (req, res) => {
     try {
         const loggedInUser = req.user._id;
+        // Optimization: Find all conversations where isGroup is true AND current user is a member
         const groups = await Conversation.find({
-            members: loggedInUser,
+            members: { $in: [loggedInUser] },
             isGroup: true
-        }).sort({ updatedAt: -1 });
+        }).sort({ updatedAt: -1 }).lean();
 
         const groupsWithUnreads = await Promise.all(groups.map(async (group) => {
             const count = await Message.countDocuments({
@@ -300,7 +302,8 @@ export const allGroups = async (req, res) => {
                 .sort({ createdAt: -1 }).select("createdAt").lean();
 
             return {
-                ...group.toObject(),
+                ...group,
+                _id: group._id.toString(),
                 unreadCount: count,
                 lastMessageAt: lastMsg?.createdAt || group.updatedAt || null
             };
