@@ -60,11 +60,16 @@ function Typesend() {
   const handleOnChange = (e) => {
     setMessage(e.target.value)
     if (socket && selectedConversation && !isBlockedByMe) {
-      socket.emit("typing", {
-        senderId: authUser.user._id,
-        receiverId: selectedConversation._id,
-        isGroup: !!selectedConversation.isGroup
-      })
+      // Throttle typing emits to once per second
+      const now = Date.now();
+      if (!window.lastTypingEmit || now - window.lastTypingEmit > 1000) {
+        socket.emit("typing", {
+          senderId: authUser.user._id,
+          receiverId: selectedConversation._id,
+          isGroup: !!selectedConversation.isGroup
+        })
+        window.lastTypingEmit = now;
+      }
 
       if (window.typingTimeout) clearTimeout(window.typingTimeout)
       window.typingTimeout = setTimeout(() => {
@@ -73,6 +78,7 @@ function Typesend() {
           receiverId: selectedConversation._id,
           isGroup: !!selectedConversation.isGroup
         })
+        window.lastTypingEmit = 0; // Reset so next keypress emits immediately
       }, 2000)
     }
   }

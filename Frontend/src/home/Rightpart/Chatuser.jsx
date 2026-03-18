@@ -70,14 +70,20 @@ function Chatuser() {
     if (socket) {
       socket.on("userTyping", ({ senderId, receiverId }) => {
         if (selectedConversation &&
-          (senderId === selectedConversation._id || (selectedConversation.isGroup && receiverId === selectedConversation._id))) {
+          (String(senderId) === String(selectedConversation._id) || (selectedConversation.isGroup && String(receiverId) === String(selectedConversation._id)))) {
           setTyping(true);
+
+          if (window.typingIndicatorTimeout) clearTimeout(window.typingIndicatorTimeout);
+          window.typingIndicatorTimeout = setTimeout(() => {
+            setTyping(false);
+          }, 3000); // Fail-safe auto-stop
         }
       });
       socket.on("userStopTyping", ({ senderId, receiverId }) => {
         if (selectedConversation &&
-          (senderId === selectedConversation._id || (selectedConversation.isGroup && receiverId === selectedConversation._id))) {
+          (String(senderId) === String(selectedConversation._id) || (selectedConversation.isGroup && String(receiverId) === String(selectedConversation._id)))) {
           setTyping(false);
+          if (window.typingIndicatorTimeout) clearTimeout(window.typingIndicatorTimeout);
         }
       });
     }
@@ -86,6 +92,7 @@ function Chatuser() {
         socket.off("userTyping");
         socket.off("userStopTyping");
       }
+      if (window.typingIndicatorTimeout) clearTimeout(window.typingIndicatorTimeout);
     };
   }, [socket, selectedConversation]);
 
@@ -147,9 +154,9 @@ function Chatuser() {
                    {typing ? (
                      <div className="flex items-center gap-1.5">
                        <span className="flex gap-0.5">
-                         <span className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                         <span className="w-1 h-1 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                         <span className="w-1 h-1 bg-primary rounded-full animate-bounce"></span>
+                         <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                         <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                         <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></span>
                        </span>
                        <span className="text-[10px] text-primary font-bold uppercase tracking-widest">{selectedConversation.isGroup ? "Someone is typing" : "Typing"}</span>
                      </div>
