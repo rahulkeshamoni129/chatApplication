@@ -17,9 +17,20 @@ function User({ user }) {
   const isAdmin = authUser?.user?.isAdmin;
   const isBlockedByMe = authUser?.user?.blockedUsers?.includes(user._id);
 
-  const handleSelectUser = () => {
-    setSelectedConversation(user)
-    clearUnreads(user._id)
+  const handleSelectUser = async () => {
+    try {
+      // First select immediately for UI responsiveness
+      setSelectedConversation(user)
+      clearUnreads(user._id)
+      
+      // Then fetch the latest data for that user (refresh Public Key etc)
+      if (!user.isGroup) {
+        const res = await axios.get(`/api/users/${user._id}`);
+        setSelectedConversation(res.data);
+      }
+    } catch (error) {
+      console.log("Error fetching user details:", error);
+    }
   }
 
   const handleTogglePin = async (e) => {
@@ -89,7 +100,7 @@ function User({ user }) {
           </div>
 
           <div className="relative flex flex-col items-end justify-center h-full min-w-[32px] shrink-0">
-            {unreads[user._id] > 0 && (
+            {unreads[user._id] > 0 && sessionStorage.getItem(`e2ee_private_key_${authUser?.user?._id}`) && (
               <div className={`transition-all duration-300 ${isSelected ? "bg-primary-content text-primary" : "bg-primary text-primary-content animate-bounce shadow-md"} min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[9px] font-black group-hover:opacity-0 group-hover:scale-0`}>
                 {unreads[user._id]}
               </div>

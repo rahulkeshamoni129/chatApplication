@@ -16,17 +16,20 @@ const SecuritySync = () => {
         const checkSecurityStatus = async () => {
             if (!authUser?.user) return;
 
-            const localPrivateKey = localStorage.getItem(`e2ee_private_key_${authUser.user._id}`);
+            // Key Synchronization / Identity Verification Logic:
+            // We use sessionStorage for the private key so the user must enter their PIN 
+            // once per browser session. This is more secure than localStorage.
+            const sessionPrivateKey = sessionStorage.getItem(`e2ee_private_key_${authUser.user._id}`);
             const serverEncryptedKey = authUser.user.encryptedPrivateKey;
 
-            // SCENARIO 1: Existing user on NEW device (Local missing, Server has encrypted key)
-            if (!localPrivateKey && serverEncryptedKey) {
-                setModalType('SYNC');
+            // SCENARIO 1: First time setup (Server has no key)
+            if (!serverEncryptedKey) {
+                setModalType('SETUP');
                 setShowModal(true);
             }
-            // SCENARIO 2: New user or Reset (Local missing, Server missing)
-            else if (!localPrivateKey && !serverEncryptedKey) {
-                setModalType('SETUP');
+            // SCENARIO 2: Key exists on server but not in this session
+            else if (!sessionPrivateKey) {
+                setModalType('SYNC'); // This covers both new device (SYNC) and re-login (VERIFY)
                 setShowModal(true);
             }
         };
@@ -47,9 +50,9 @@ const SecuritySync = () => {
                 // 2. Protect Private Key with PIN
                 const encryptedPrivateKey = await protectPrivateKey(privateKey, pin, authUser.user._id);
                 
-                // 3. Save to server and local
+                // 3. Save to server and session
                 await axios.put('/api/users/update-public-key', { publicKey, encryptedPrivateKey });
-                localStorage.setItem(`e2ee_private_key_${authUser.user._id}`, privateKey);
+                sessionStorage.setItem(`e2ee_private_key_${authUser.user._id}`, privateKey);
                 
                 // 4. Update state
                 const updatedUser = { 
@@ -61,13 +64,13 @@ const SecuritySync = () => {
                 toast.success("Security keys generated and synced!");
             } 
             else {
-                // SYNC mode
+                // SYNC / VERIFY mode
                 try {
                     const decryptedKey = await unprotectPrivateKey(authUser.user.encryptedPrivateKey, pin, authUser.user._id);
-                    localStorage.setItem(`e2ee_private_key_${authUser.user._id}`, decryptedKey);
-                    toast.success("Identity synced successfully!");
+                    sessionStorage.setItem(`e2ee_private_key_${authUser.user._id}`, decryptedKey);
+                    toast.success("Identity verified successfully!");
                 } catch (err) {
-                    throw new Error("Incorrect Security PIN. Identification failed.");
+                    throw new Error("Incorrect Security PIN. Verification failed.");
                 }
             }
             setShowModal(false);
@@ -88,12 +91,12 @@ const SecuritySync = () => {
                         {modalType === 'SETUP' ? <IoShieldCheckmarkOutline size={32} /> : <IoSyncOutline size={32} />}
                     </div>
                     <h2 className="text-xl font-black tracking-tight mb-2">
-                        {modalType === 'SETUP' ? 'Setup Security PIN' : 'Sync Identity'}
+                        {modalType === 'SETUP' ? 'Initialize Privacy' : 'Identity Verification'}
                     </h2>
-                    <p className="text-[10px] uppercase font-black tracking-widest opacity-40 leading-relaxed">
+                    <p className="text-[10px] uppercase font-black tracking-widest opacity-40 leading-relaxed px-4">
                         {modalType === 'SETUP' 
                             ? 'Create a PIN to protect and sync your private messages across devices.' 
-                            : 'Enter your Security PIN to unlock your existing messages on this device.'}
+                            : 'Enter your Security PIN to decrypt your end-to-end encrypted chats.'}
                     </p>
                 </div>
 

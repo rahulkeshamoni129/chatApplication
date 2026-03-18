@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useSocketcontext } from './SocketContext.jsx'
 import useConversation from '../zustand/useConversation.js'
 import { useAuth } from './Authprovider.jsx'
+import { decryptMessage } from '../utils/cryptoUtils.js'
 
 const useGetSocketMessage = () => {
     const { socket } = useSocketcontext()
@@ -11,10 +12,35 @@ const useGetSocketMessage = () => {
     useEffect(() => {
         if (!socket) return;
 
-        socket.on("newMessage", (newMessage) => {
+        socket.on("newMessage", async (newMessage) => {
             const senderId = newMessage.senderId?._id || newMessage.senderId;
             const receiverId = newMessage.receiverId?._id || newMessage.receiverId;
             const convId = selectedConversation?._id;
+
+            // Decrypt message if needed BEFORE adding to state
+            let processedMessage = { ...newMessage };
+            const privKey = sessionStorage.getItem(`e2ee_private_key_${authUser.user._id}`);
+            
+            if (processedMessage.message?.startsWith("__E2EE__") && privKey) {
+                try {
+                    const itsMe = senderId === authUser.user._id;
+                    const decoded = await decryptMessage(processedMessage.message, privKey, itsMe);
+                    processedMessage.message = decoded;
+                } catch (e) {
+                    processedMessage.message = "[Decryption Error]";
+                }
+            }
+
+            // Also decrypt reply if exists
+            if (processedMessage.replyTo?.message?.startsWith("__E2EE__") && privKey) {
+                try {
+                    const replyIsMe = processedMessage.replyTo.senderId === authUser.user?._id;
+                    const decoded = await decryptMessage(processedMessage.replyTo.message, privKey, replyIsMe);
+                    processedMessage.replyTo.message = decoded;
+                } catch (e) {
+                    processedMessage.replyTo.message = "[Decryption Error]";
+                }
+            }
 
             const isCurrentChat =
                 convId &&
@@ -36,8 +62,8 @@ const useGetSocketMessage = () => {
                 // Use functional updater via Zustand to avoid stale closure
                 setMessage(prev => {
                     // Prevent duplicates
-                    if (prev.find(m => m._id === newMessage._id)) return prev;
-                    return [...prev, newMessage];
+                    if (prev.find(m => m._id === processedMessage._id)) return prev;
+                    return [...prev, processedMessage];
                 });
             } else {
                 // If receiverId is ME, it's a private chat, so use senderId for the badge
@@ -60,9 +86,23 @@ const useGetSocketMessage = () => {
             ));
         });
 
-        socket.on("messageEdited", (updatedMsg) => {
+        socket.on("messageEdited", async (updatedMsg) => {
+            let processedMsg = { ...updatedMsg };
+            const privKey = sessionStorage.getItem(`e2ee_private_key_${authUser.user._id}`);
+            
+            if (processedMsg.message?.startsWith("__E2EE__") && privKey) {
+                try {
+                    const senderId = processedMsg.senderId?._id || processedMsg.senderId;
+                    const itsMe = senderId === authUser.user._id;
+                    const decoded = await decryptMessage(processedMsg.message, privKey, itsMe);
+                    processedMsg.message = decoded;
+                } catch (e) {
+                    processedMsg.message = "[Decryption Error]";
+                }
+            }
+            
             setMessage(prev => prev.map(msg =>
-                msg._id === updatedMsg._id ? updatedMsg : msg
+                msg._id === processedMsg._id ? processedMsg : msg
             ));
         });
 

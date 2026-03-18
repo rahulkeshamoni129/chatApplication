@@ -126,6 +126,18 @@ export const logout = async (req, res) => {
     }
 }
 
+export const getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id).select("-password -email");
+        if (!user) return res.status(404).json({ error: "User not found" });
+        res.status(200).json(user);
+    } catch (error) {
+        console.log("Error in getUserById: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 export const allUsers = async (req, res) => {
     try {
         const loggedInUser = req.user._id;

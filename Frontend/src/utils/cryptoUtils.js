@@ -90,7 +90,12 @@ const bufferToBase64 = (buffer) => {
 
 // Helper: Convert Base64 to ArrayBuffer
 const base64ToBuffer = (base64) => {
-    const binary = atob(base64);
+    // Standardize padding for Web Crypto API
+    let paddedBase64 = base64;
+    while (paddedBase64.length % 4 !== 0) {
+        paddedBase64 += '=';
+    }
+    const binary = atob(paddedBase64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) {
         bytes[i] = binary.charCodeAt(i);

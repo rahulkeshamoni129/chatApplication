@@ -1,9 +1,6 @@
-import React from 'react';
-import { useTranslation } from '../../context/TranslationContext';
 import { useAuth } from '../../context/Authprovider';
 
 function Logout() {
-  const { lang, setLang } = useTranslation();
   const [authUser] = useAuth();
 
   return (
@@ -23,20 +20,6 @@ function Logout() {
               <p className="text-[9px] font-semibold opacity-40 uppercase tracking-widest">Online</p>
             </div>
           </div>
-        </div>
-        
-        {/* Language Selector - More compact and separated */}
-        <div className="flex flex-col items-end gap-0.5">
-            <div className="text-[8px] font-bold opacity-30 uppercase tracking-tighter">Lang</div>
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value)}
-              className="select select-ghost select-xs text-[10px] font-bold px-1 h-6 min-h-6 bg-base-300/30 rounded border-none focus:outline-none appearance-none cursor-pointer"
-            >
-              <option value="en">EN</option>
-              <option value="hi">HI</option>
-              <option value="es">ES</option>
-            </select>
         </div>
       </div>
     </div>

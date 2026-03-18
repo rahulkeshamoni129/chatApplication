@@ -3,11 +3,9 @@ import { FaSearch } from "react-icons/fa";
 import userGetAllUsers from "../../context/userGetAllUsers";
 import useConversation from "../../zustand/useConversation";
 import toast from "react-hot-toast";
-import { useTranslation } from "../../context/TranslationContext";
 function Search() {
   const { setSelectedConversation, clearUnreads, sidebarSearch, setSidebarSearch } = useConversation();
   const [allUsers] = userGetAllUsers();
-  const { t } = useTranslation();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -34,7 +32,7 @@ function Search() {
           <input
             type="text"
             className="w-full bg-base-200 border-none rounded-2xl py-3 pl-11 pr-4 text-sm font-medium placeholder:text-base-content/30 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-            placeholder={t('search')}
+            placeholder="Search"
             value={sidebarSearch}
             onChange={(e) => setSidebarSearch(e.target.value)}
           />

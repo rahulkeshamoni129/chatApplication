@@ -9,43 +9,19 @@ import useDeleteMessage from '../../context/useDeleteMessage.js'
 import useConversation from '../../zustand/useConversation.js'
 import ForwardModal from '../../components/ForwardModal'
 
-import { decryptMessage } from '../../utils/cryptoUtils'
-import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 function Message({ message }) {
   const authUser = JSON.parse(localStorage.getItem('chatApp'))
   const { setEditingMessage, setReplyingTo, updateMessage, selectedConversation } = useConversation();
   const [showForward, setShowForward] = useState(false);
   const [showSeenBy, setShowSeenBy] = useState(false);
-  const [decryptedContent, setDecryptedContent] = useState(message.message);
-  const [decryptedReply, setDecryptedReply] = useState(message.replyTo?.message);
-  
   const senderId = message.senderId?._id || message.senderId;
   const itsMe = senderId === authUser.user._id;
 
-  // E2EE: Decrypt message and reply on arrival
-  useEffect(() => {
-    const decrypt = async () => {
-      const privKey = localStorage.getItem(`e2ee_private_key_${authUser.user._id}`);
-
-      // Decrypt main message
-      if (message.message?.startsWith("__E2EE__")) {
-        const result = await decryptMessage(message.message, privKey, itsMe);
-        setDecryptedContent(result);
-      } else {
-        setDecryptedContent(message.message);
-      }
-
-      // Decrypt reply if present
-      if (message.replyTo?.message?.startsWith("__E2EE__")) {
-        const result = await decryptMessage(message.replyTo.message, privKey, message.replyTo.senderId === authUser.user._id);
-        setDecryptedReply(result);
-      } else {
-        setDecryptedReply(message.replyTo?.message);
-      }
-    };
-    decrypt();
-  }, [message.message, message.replyTo?.message, authUser.user._id]);
+  // E2EE: Logic removed - messages are pre-decrypted by hooks
+  const decryptedContent = message.message;
+  const decryptedReply = message.replyTo?.message;
 
   const isAdmin = authUser.user.isAdmin;
   const { deleteMessage } = useDeleteMessage();

@@ -24,6 +24,7 @@ function SidebarRail() {
       setLoading(true);
       await axios.post("/api/users/logout");
       localStorage.removeItem("chatApp");
+      sessionStorage.clear();
       Cookies.remove("jwt");
       setLoading(false);
       toast.success("Logged out successfully");
