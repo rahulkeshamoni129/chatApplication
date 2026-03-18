@@ -1,4 +1,5 @@
 // index.js
+import path from "path";
 import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -26,6 +27,15 @@ try {
 
 app.use("/api/users", userRoute);
 app.use("/api/message", messageRoute);
+
+// Serving Static Frontend Files (Build)
+const __dirname = path.resolve();
+if (process.env.NODE_ENV === "production") {
+    app.use(express.static(path.join(__dirname, "Frontend", "dist")));
+    app.get("*", (req, res) => {
+        res.sendFile(path.resolve(__dirname, "Frontend", "dist", "index.html"));
+    });
+}
 
 server.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
