@@ -6,7 +6,7 @@ import SidebarRail from './SidebarRail';
 
 function Left() {
   return (
-    <div className="h-screen bg-base-100 text-base-content flex border-r border-base-200 shadow-[10px_0_15px_-3px_rgba(0,0,0,0.1)] z-10 relative overflow-hidden">
+    <div className="h-full bg-base-100 text-base-content flex border-r border-base-200 shadow-[10px_0_15px_-3px_rgba(0,0,0,0.1)] z-10 relative overflow-hidden">
       {/* Rail Sidebar (New) */}
       <SidebarRail />
 

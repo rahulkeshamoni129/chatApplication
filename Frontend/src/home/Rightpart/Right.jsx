@@ -85,9 +85,9 @@ const NoChatSelected = () => {
     <div className="relative flex-1 h-full flex flex-col justify-center items-center overflow-hidden">
       <label
         htmlFor="my-drawer-2"
-        className="btn btn-ghost drawer-button lg:hidden absolute left-5 top-5"
+        className="btn btn-circle bg-base-100/50 backdrop-blur-md border-base-300/50 shadow-lg drawer-button lg:hidden absolute left-5 top-5 z-20 hover:bg-base-100 transition-all duration-300"
       >
-        <CiMenuFries className="text-white text-xl" />
+        <CiMenuFries className="text-primary text-xl" />
       </label>
 
       {/* Announcements Panel - top area */}

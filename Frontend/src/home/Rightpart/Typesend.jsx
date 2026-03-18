@@ -87,8 +87,15 @@ function Typesend() {
     <div className='relative'>
       {/* Emoji Picker */}
       {showEmoji && (
-        <div className="absolute bottom-full right-6 z-50 mb-2">
-          <EmojiPicker onEmojiClick={onEmojiClick} theme="auto" searchDisabled={false} skinTonesDisabled={true} />
+        <div className="absolute bottom-full right-2 md:right-6 z-50 mb-2 animate-in slide-in-from-bottom-2 duration-300">
+          <EmojiPicker 
+            onEmojiClick={onEmojiClick} 
+            theme="auto" 
+            searchDisabled={false} 
+            skinTonesDisabled={true} 
+            width={window.innerWidth < 500 ? "280px" : "350px"} 
+            height="400px"
+          />
         </div>
       )}
 

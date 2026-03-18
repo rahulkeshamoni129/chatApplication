@@ -28,6 +28,10 @@ function User({ user }) {
         const res = await axios.get(`/api/users/${user._id}`);
         setSelectedConversation(res.data);
       }
+
+      // Close drawer on mobile after selection
+      const drawerToggle = document.getElementById("my-drawer-2");
+      if (drawerToggle) drawerToggle.checked = false;
     } catch (error) {
       console.log("Error fetching user details:", error);
     }

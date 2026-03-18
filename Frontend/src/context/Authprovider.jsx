@@ -7,10 +7,15 @@ export const AuthContext=createContext()
 //children can be all the components that we did in our project like login signup leftpart,rightpart,app.jsx 
 export const Authprovider=({children})=> {
     //retrieving user information stored in the browser
-   const initialUserState=Cookies.get("jwt") || localStorage.getItem("chatApp");
-
-   //parse the user  data and storing it in state variable
-   const [authUser,setAuthUser]=useState(initialUserState?JSON.parse(initialUserState):undefined);
+    const initialUserState = localStorage.getItem("chatApp");
+    let user = undefined;
+    try {
+        if (initialUserState) user = JSON.parse(initialUserState);
+    } catch (e) {
+        console.error("Auth initialization error:", e);
+        localStorage.removeItem("chatApp");
+    }
+    const [authUser, setAuthUser] = useState(user);
   return (
     <AuthContext.Provider value={[authUser,setAuthUser]}>
     {children}

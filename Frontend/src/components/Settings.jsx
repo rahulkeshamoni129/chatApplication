@@ -70,31 +70,33 @@ function Settings({ onClose }) {
     const NavItem = ({ id, label, icon }) => (
         <button
             onClick={() => setActiveTab(id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === id ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-[1.02]' : 'hover:bg-base-200 opacity-60 hover:opacity-100'}`}
+            className={`flex-1 md:w-full flex items-center justify-center md:justify-start gap-3 px-4 py-3 rounded-xl transition-all font-bold whitespace-nowrap ${activeTab === id ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-[1.02]' : 'hover:bg-base-200 opacity-60 hover:opacity-100'}`}
         >
             {icon}
-            <span className="text-sm">{label}</span>
+            <span className="text-[11px] md:text-sm uppercase tracking-widest">{label}</span>
         </button>
     );
 
     return createPortal(
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-10 animate-in fade-in duration-300">
-            <div className="bg-base-100 w-full max-w-4xl h-full max-h-[600px] rounded-[2rem] overflow-hidden shadow-2xl border border-base-200 flex flex-col md:flex-row animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+            <div className="bg-base-100 w-full max-w-4xl h-full md:h-auto max-h-[85vh] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-2xl border border-base-200 flex flex-col md:flex-row animate-in zoom-in-95 duration-300">
                 
                 {/* Sidebar */}
-                <div className="w-full md:w-64 bg-base-200/50 border-r border-base-200 p-6 flex flex-col gap-6">
-                    <div className="flex items-center justify-between md:mb-4">
-                        <h2 className="text-2xl font-black italic tracking-tighter text-primary">SETTINGS</h2>
-                        <button onClick={onClose} className="btn btn-circle btn-xs btn-ghost md:hidden">
+                <div className="w-full md:w-64 bg-base-200/50 border-b md:border-b-0 md:border-r border-base-200 p-4 md:p-6 flex flex-col gap-4 md:gap-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl md:text-2xl font-black italic tracking-tighter text-primary">SETTINGS</h2>
+                        <button onClick={onClose} className="btn btn-circle btn-sm btn-ghost md:hidden">
                             <IoClose size={20} />
                         </button>
                     </div>
 
-                    <div className="flex flex-row md:flex-col gap-1 overflow-x-auto no-scrollbar">
-                        <NavItem id="profile" label="Profile" icon={<IoPersonOutline size={20} />} />
-                        <NavItem id="security" label="Security" icon={<IoLockClosedOutline size={20} />} />
-                        <NavItem id="appearance" label="Appearance" icon={<IoColorPaletteOutline size={20} />} />
-                        <NavItem id="starred" label="Starred" icon={<IoStarOutline size={20} />} />
+                    <div className="flex flex-col h-full overflow-hidden">
+                        <div className="min-w-fit md:w-full flex md:flex-col gap-1 overflow-x-auto no-scrollbar pb-2 md:pb-0">
+                            <NavItem id="profile" label="Profile" icon={<IoPersonOutline size={20} />} />
+                            <NavItem id="security" label="Security" icon={<IoLockClosedOutline size={20} />} />
+                            <NavItem id="appearance" label="Appearance" icon={<IoColorPaletteOutline size={20} />} />
+                            <NavItem id="starred" label="Starred" icon={<IoStarOutline size={20} />} />
+                        </div>
                     </div>
 
                     <div className="hidden md:block mt-auto bg-base-300/50 p-4 rounded-2xl border border-base-300">

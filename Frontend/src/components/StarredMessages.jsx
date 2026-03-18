@@ -22,7 +22,7 @@ function StarredMessages({ onClose }) {
   }, []);
 
   return (
-    <div className="flex flex-col h-[400px]">
+    <div className="flex flex-col h-full overflow-hidden">
         {/* Sub-Header */}
         <div className="flex items-center gap-3 mb-4 p-3 bg-warning/10 rounded-2xl border border-warning/20">
             <div className="p-2 bg-warning text-warning-content rounded-xl shadow-sm">

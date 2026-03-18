@@ -120,7 +120,7 @@ function Chatuser() {
     <div className="relative bg-base-100/70 backdrop-blur-xl h-[10vh] border-b border-base-200 shadow-sm flex items-center justify-between px-6 lg:px-10 z-[100]">
 
       <div className="flex items-center gap-4">
-        <label htmlFor="my-drawer-2" className="btn btn-ghost btn-sm btn-circle lg:hidden">
+        <label htmlFor="my-drawer-2" className="btn btn-sm btn-circle bg-primary/10 text-primary border-none hover:bg-primary/20 lg:hidden">
           <CiMenuFries size={20} />
         </label>
 

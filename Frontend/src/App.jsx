@@ -45,7 +45,7 @@ function App() {
               //   <Left />
               //   <Right />
               // </div>
-              <div className="drawer lg:drawer-open h-screen w-full overflow-hidden text-base-content bg-base-100">
+              <div className="drawer lg:drawer-open h-[100dvh] w-full overflow-hidden text-base-content bg-base-100">
                 <input
                   id="my-drawer-2"
                   type="checkbox"
