@@ -36,7 +36,7 @@ if (process.env.NODE_ENV === "production") {
         res.sendFile(path.resolve(__dirname, "Frontend", "dist", "index.html"));
     });
     // For all other routes, serve index.html
-    app.get("/:path*", (req, res) => {
+    app.get("/*path", (req, res) => {
         res.sendFile(path.resolve(__dirname, "Frontend", "dist", "index.html"));
     });
 }
