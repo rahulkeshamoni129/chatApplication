@@ -84,10 +84,15 @@ const useGetSocketMessage = () => {
             setMessage(prev => prev.filter((msg) => msg._id !== messageId));
         });
 
-        socket.on("messagesSeen", ({ seenMessages }) => {
+        socket.on("messagesSeen", ({ seenMessages, chatId, isMe }) => {
             setMessage(prev => prev.map(msg =>
                 seenMessages.includes(msg._id) ? { ...msg, seen: true } : msg
             ));
+            
+            // If I am the one who saw them (syncing across tabs)
+            if (isMe && chatId) {
+                clearUnreads(chatId);
+            }
         });
 
         socket.on("messageEdited", async (updatedMsg) => {
@@ -116,7 +121,7 @@ const useGetSocketMessage = () => {
             ));
         });
 
-        socket.on("groupMessagesSeen", ({ messageIds, userId, fullname }) => {
+        socket.on("groupMessagesSeen", ({ messageIds, userId, fullname, chatId }) => {
             setMessage(prev => prev.map(msg => {
                 if (!messageIds.includes(msg._id)) return msg;
 
@@ -134,6 +139,11 @@ const useGetSocketMessage = () => {
                     ] 
                 }
             }));
+
+            // Sync unreads across tabs if it's ME who saw the messages
+            if (userId === authUser.user?._id && chatId) {
+                clearUnreads(chatId);
+            }
         });
 
         socket.on("groupDeleted", (groupId) => {

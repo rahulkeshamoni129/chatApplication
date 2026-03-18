@@ -21,9 +21,8 @@ function useGetGroups() {
 
             // Sync group unread counts and seed lastMessageAt
             response.data.forEach(group => {
-                if (group.unreadCount > 0) {
-                    setUnreads(prev => ({ ...prev, [group._id]: group.unreadCount }));
-                }
+                setUnreads(prev => ({ ...prev, [group._id]: group.unreadCount || 0 }));
+                
                 if (group.lastMessageAt) {
                     seedLastMessageAt(group._id, group.lastMessageAt);
                 }

@@ -21,9 +21,8 @@ function userGetAllUsers() {
 
             // Sync unread counts and seed lastMessageAt from backend
             response.data.forEach(user => {
-                if (user.unreadCount > 0) {
-                    setUnreads(prev => ({ ...prev, [user._id]: user.unreadCount }));
-                }
+                setUnreads(prev => ({ ...prev, [user._id]: user.unreadCount || 0 }));
+                
                 if (user.lastMessageAt) {
                     seedLastMessageAt(user._id, user.lastMessageAt);
                 }

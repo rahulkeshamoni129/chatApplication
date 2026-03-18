@@ -187,18 +187,16 @@ export const markMessagesAsSeen = async (req, res) => {
                     { $push: { seenBy: { userId: loggedInUserId } } }
                 );
 
-                // Broadcast update to group members
+                // Broadcast update to all group members
                 conversation.members.forEach(memberId => {
-                    if (memberId.toString() !== loggedInUserId.toString()) {
-                        const socketId = getReceiverSocketId(memberId);
-                        if (socketId) {
-                            io.to(socketId).emit("groupMessagesSeen", {
-                                chatId,
-                                userId: loggedInUserId,
-                                fullname: req.user.fullname,
-                                messageIds: unseenMessages.map(m => m._id)
-                            });
-                        }
+                    const socketId = getReceiverSocketId(memberId);
+                    if (socketId) {
+                        io.to(socketId).emit("groupMessagesSeen", {
+                            chatId,
+                            userId: loggedInUserId,
+                            fullname: req.user.fullname,
+                            messageIds: unseenMessages.map(m => m._id)
+                        });
                     }
                 });
             }
@@ -219,10 +217,20 @@ export const markMessagesAsSeen = async (req, res) => {
                     }
                 );
 
-                const receiverSocketId = getReceiverSocketId(chatId);
-                if (receiverSocketId) {
-                    io.to(receiverSocketId).emit("messagesSeen", {
+                const senderSocketId = getReceiverSocketId(chatId);
+                if (senderSocketId) {
+                    io.to(senderSocketId).emit("messagesSeen", {
                         seenMessages: unseenMessages.map(msg => msg._id)
+                    });
+                }
+
+                // Also notify viewer's other tabs
+                const viewerSocketId = getReceiverSocketId(loggedInUserId);
+                if (viewerSocketId) {
+                    io.to(viewerSocketId).emit("messagesSeen", {
+                        chatId, // The user whose messages were seen
+                        seenMessages: unseenMessages.map(msg => msg._id),
+                        isMe: true
                     });
                 }
             }

@@ -313,7 +313,7 @@ export const allGroups = async (req, res) => {
             const count = await Message.countDocuments({
                 receiverId: group._id,
                 senderId: { $ne: loggedInUser }, // Added this to be explicit: only messages from others are unread
-                'seenBy.userId': { $ne: loggedInUser }
+                'seenBy.userId': { $nin: [loggedInUser] }
             });
 
             // Find the most recent message in this group
