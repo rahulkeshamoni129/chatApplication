@@ -9,7 +9,7 @@ const useGetSocketMessage = () => {
     const { socket } = useSocketcontext()
     const { 
         setMessage, selectedConversation, setSelectedConversation,
-        addUnread, updateMessage, bumpConversation 
+        addUnread, updateMessage, bumpConversation, updateSecurityUpdate
     } = useConversation()
     const [authUser] = useAuth();
 
@@ -116,12 +116,24 @@ const useGetSocketMessage = () => {
             ));
         });
 
-        socket.on("groupMessagesSeen", ({ messageIds, userId }) => {
-            setMessage(prev => prev.map(msg =>
-                messageIds.includes(msg._id)
-                    ? { ...msg, seenBy: [...(msg.seenBy || []), { userId, seenAt: new Date() }] }
-                    : msg
-            ));
+        socket.on("groupMessagesSeen", ({ messageIds, userId, fullname }) => {
+            setMessage(prev => prev.map(msg => {
+                if (!messageIds.includes(msg._id)) return msg;
+
+                const alreadySeen = msg.seenBy?.some(s => (s.userId?._id || s.userId) === userId);
+                if (alreadySeen) return msg;
+
+                return { 
+                    ...msg, 
+                    seenBy: [
+                        ...(msg.seenBy || []), 
+                        { 
+                            userId: { _id: userId, fullname: fullname }, 
+                            seenAt: new Date() 
+                        }
+                    ] 
+                }
+            }));
         });
 
         socket.on("groupDeleted", (groupId) => {
@@ -134,6 +146,12 @@ const useGetSocketMessage = () => {
                 window.location.reload();
             }
         });
+        
+        socket.on("newGroup", (data) => {
+            // Trigger a re-fetch of all groups via useGetGroups
+            updateSecurityUpdate();
+            toast.success(`New group: ${data.fullname}`);
+        });
 
         return () => {
             socket.off("newMessage")
@@ -143,8 +161,9 @@ const useGetSocketMessage = () => {
             socket.off("messageReaction")
             socket.off("groupMessagesSeen")
             socket.off("groupDeleted")
+            socket.off("newGroup")
         }
-    }, [socket, selectedConversation]) // Removed `messages` from deps - use functional updater instead
+    }, [socket, selectedConversation, updateSecurityUpdate]) // Removed `messages` from deps - use functional updater instead
 }
 
 export default useGetSocketMessage

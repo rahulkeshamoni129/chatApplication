@@ -130,7 +130,9 @@ function Message({ message }) {
                             <p className="font-black text-[9px] uppercase opacity-40 mb-2 tracking-widest border-b border-base-200 pb-1">Seen by</p>
                             <div className="flex flex-col gap-1.5">
                                {message.seenBy.map((s, idx) => (
-                                 <p key={idx} className="text-[10px] font-bold truncate">{s.userId?.fullname || "Unknown"}</p>
+                                 <p key={idx} className="text-[10px] font-bold truncate">
+                                   {s.userId?.fullname || (typeof s.userId === 'string' ? "Someone" : "Unknown")}
+                                 </p>
                                ))}
                             </div>
                           </div>

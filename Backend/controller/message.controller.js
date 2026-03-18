@@ -178,7 +178,7 @@ export const markMessagesAsSeen = async (req, res) => {
             const unseenMessages = await Message.find({
                 receiverId: chatId,
                 senderId: { $ne: loggedInUserId },
-                'seenBy.userId': { $ne: loggedInUserId }
+                'seenBy.userId': { $nin: [loggedInUserId] }
             });
 
             if (unseenMessages.length > 0) {
@@ -195,6 +195,7 @@ export const markMessagesAsSeen = async (req, res) => {
                             io.to(socketId).emit("groupMessagesSeen", {
                                 chatId,
                                 userId: loggedInUserId,
+                                fullname: req.user.fullname,
                                 messageIds: unseenMessages.map(m => m._id)
                             });
                         }

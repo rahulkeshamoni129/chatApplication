@@ -18,11 +18,26 @@ const useMarkSeen = () => {
 
                 // Locally update unseen messages
                 messages.forEach(msg => {
-                    const isFromOther = msg.senderId !== authUser.user?._id;
+                    const senderIdStr = msg.senderId?._id || msg.senderId;
+                    const isFromOther = senderIdStr !== authUser.user?._id;
+                    
                     if (selectedConversation.isGroup) {
-                        const alreadySeen = msg.seenBy?.some(s => s.userId === authUser.user?._id);
+                        const alreadySeen = msg.seenBy?.some(s => {
+                            const sid = s.userId?._id || s.userId;
+                            return sid === authUser.user?._id;
+                        });
+                        
                         if (isFromOther && !alreadySeen) {
-                            updateMessage({ ...msg, seenBy: [...(msg.seenBy || []), { userId: authUser.user?._id }] });
+                            updateMessage({ 
+                                ...msg, 
+                                seenBy: [...(msg.seenBy || []), { 
+                                    userId: { 
+                                        _id: authUser.user?._id, 
+                                        fullname: authUser.user?.fullname 
+                                    }, 
+                                    seenAt: new Date() 
+                                }] 
+                            });
                         }
                     } else if (isFromOther && !msg.seen) {
                         updateMessage({ ...msg, seen: true });

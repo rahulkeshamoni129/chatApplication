@@ -278,6 +278,21 @@ export const createGroup = async (req, res) => {
             messages: []
         });
 
+        // Broadcast to all members so it shows in their sidebar immediately
+        allMembers.forEach(memberId => {
+            const socketId = getReceiverSocketId(memberId);
+            if (socketId) {
+                io.to(socketId).emit("newGroup", {
+                    ...newGroup.toObject(),
+                    _id: newGroup._id.toString(),
+                    fullname: groupName,
+                    isGroup: true,
+                    unreadCount: 0,
+                    lastMessageAt: newGroup.createdAt
+                });
+            }
+        });
+
         res.status(201).json(newGroup);
     } catch (error) {
         console.log("Error in createGroup: ", error);
