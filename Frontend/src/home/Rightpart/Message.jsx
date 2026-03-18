@@ -69,8 +69,8 @@ function Message({ message }) {
     <div id={message._id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className='group'>
         <div className={`chat ${chatName}`}>
-          <div className={`relative w-fit max-w-[85%] sm:max-w-[75%] ${itsMe ? 'ml-auto' : ''}`}>
-            <div className={`chat-bubble ${chatBubbleStyle} min-h-0 py-2.5 px-3 relative text-[13px] font-medium leading-relaxed w-fit max-w-full pb-6 pr-10`}>
+          <div className={`relative max-w-[90%] sm:max-w-[80%] ${itsMe ? 'ml-auto' : ''}`}>
+            <div className={`chat-bubble ${chatBubbleStyle} min-h-0 py-2.5 px-4 relative text-[14px] font-medium leading-relaxed w-fit max-w-full pb-7 pr-12 min-w-[80px]`}>
               {selectedConversation?.isGroup && !itsMe && (
                 <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 opacity-80">
                   {message.senderId?.fullname || "Unknown User"}

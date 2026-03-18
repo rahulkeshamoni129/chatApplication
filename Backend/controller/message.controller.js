@@ -148,14 +148,18 @@ export const deleteMessage = async (req, res) => {
 
         await Message.findByIdAndDelete(id);
 
-        await Conversation.updateOne(
+        const conversation = await Conversation.findOneAndUpdate(
             { messages: id },
             { $pull: { messages: id } }
         );
 
-        const receiverSocketId = getReceiverSocketId(message.receiverId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("messageDeleted", id);
+        if (conversation) {
+            conversation.members.forEach(memberId => {
+                const receiverSocketId = getReceiverSocketId(memberId.toString());
+                if (receiverSocketId) {
+                    io.to(receiverSocketId).emit("messageDeleted", id);
+                }
+            });
         }
 
         res.status(200).json({ message: "Message deleted successfully", messageId: id });

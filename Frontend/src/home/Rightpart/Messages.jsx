@@ -19,7 +19,7 @@ function Messages() {
   const pinnedMessage = messages.findLast(m => m.isPinned);
 
   return (
-    <div className='flex flex-col gap-2 relative'>
+    <div className='flex flex-col gap-3 py-4 relative'>
       {pinnedMessage && (
         <div className="sticky top-0 z-20 bg-primary/20 backdrop-blur-md border-b border-primary/20 p-2 flex items-center justify-between animate-in slide-in-from-top duration-300 mx-[-1rem] px-6">
           <div className="flex items-center gap-3 overflow-hidden cursor-pointer" onClick={() => document.getElementById(pinnedMessage._id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}>
