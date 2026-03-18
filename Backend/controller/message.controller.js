@@ -18,6 +18,10 @@ export const sendMessage = async (req, res) => {
             ]
         });
 
+        if (conversation && conversation.isGroup && !conversation.members.includes(senderId)) {
+            return res.status(403).json({ error: "You are not a member of this group" });
+        }
+
         if (!conversation) {
             // Only create if it's a user-to-user chat
             const targetUser = await User.findById(targetId);

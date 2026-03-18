@@ -262,14 +262,15 @@ export const createGroup = async (req, res) => {
             return res.status(400).json({ error: "At least 2 members are required to create a group" });
         }
 
-        // Add admin to members if not already there
-        const allMembers = [...new Set([...members, loggedInUser.toString()])];
+        // Add admin to members and cast to ObjectIds for consistency
+        const allMembers = [...new Set([...members, loggedInUser.toString()])].map(m => new mongoose.Types.ObjectId(m));
 
         const newGroup = await Conversation.create({
             groupName,
             members: allMembers,
             isGroup: true,
-            groupAdmin: loggedInUser
+            groupAdmin: loggedInUser,
+            messages: []
         });
 
         res.status(201).json(newGroup);
@@ -290,6 +291,7 @@ export const allGroups = async (req, res) => {
         const groupsWithUnreads = await Promise.all(groups.map(async (group) => {
             const count = await Message.countDocuments({
                 receiverId: group._id,
+                senderId: { $ne: loggedInUser }, // Added this to be explicit: only messages from others are unread
                 'seenBy.userId': { $ne: loggedInUser }
             });
 
