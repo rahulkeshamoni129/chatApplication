@@ -78,7 +78,7 @@ function Message({ message }) {
               )}
               {message.replyTo && (
                 <div 
-                  className={`border-l-4 p-2 rounded-xl mb-2 text-[11px] cursor-pointer transition-all max-w-[95%] overflow-hidden shadow-sm ${
+                  className={`border-l-4 p-2 rounded-xl mb-2 text-[11px] cursor-pointer transition-all min-w-[150px] max-w-[95%] overflow-hidden shadow-sm ${
                     itsMe 
                       ? 'bg-white/15 border-white/40 text-primary-content font-medium' 
                       : 'bg-base-300 border-primary text-base-content/80'
@@ -93,7 +93,7 @@ function Message({ message }) {
                   }`}>
                     {message.replyTo.senderId === authUser.user._id ? "You" : "Them"}
                   </p>
-                  <p className="truncate italic leading-tight whitespace-pre-wrap">
+                  <p className="italic leading-tight whitespace-pre-wrap">
                     "{decryptedReply || "[Message Unreadable]"}"
                   </p>
                 </div>

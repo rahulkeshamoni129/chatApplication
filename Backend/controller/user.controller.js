@@ -242,7 +242,9 @@ export const togglePinChat = async (req, res) => {
 
         if (!user.pinnedChats) user.pinnedChats = [];
 
-        const index = user.pinnedChats.indexOf(contactId);
+        // Use toString() to ensure comparison works between String IDs and ObjectIds
+        const index = user.pinnedChats.findIndex(id => id.toString() === contactId.toString());
+        
         if (index === -1) {
             user.pinnedChats.push(contactId);
         } else {
