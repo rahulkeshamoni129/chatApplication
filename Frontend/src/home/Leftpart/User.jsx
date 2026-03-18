@@ -42,6 +42,19 @@ function User({ user }) {
     try {
       await axios.put('/api/users/pin-chat', { contactId: user._id });
       togglePin(user._id);
+
+      // Update local authUser to persist pin state and prevent re-sync overwrite
+      const updatedAuth = { ...authUser };
+      if (!updatedAuth.user.pinnedChats) updatedAuth.user.pinnedChats = [];
+      const index = updatedAuth.user.pinnedChats.indexOf(user._id);
+      if (index === -1) {
+        updatedAuth.user.pinnedChats.push(user._id);
+      } else {
+        updatedAuth.user.pinnedChats.splice(index, 1);
+      }
+      setAuthUser(updatedAuth);
+      localStorage.setItem("chatApp", JSON.stringify(updatedAuth));
+
       toast.success(isPinned ? "Chat unpinned" : "Chat pinned");
     } catch (error) {
       console.log("Error pinning chat:", error);

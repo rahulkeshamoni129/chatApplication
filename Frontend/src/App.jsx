@@ -44,12 +44,11 @@ function App() {
     if (authUser?.user?.pinnedChats) {
       setPinnedChats(authUser.user.pinnedChats);
     }
-  }, [authUser, setPinnedChats]);
+  }, [authUser?.user?._id, setPinnedChats]);
 
   // ALWAYS listen to socket events (new messages, unreads, etc.)
   useGetSocketMessage();
 
-  console.log(authUser);
   return (
     <>
       <SecuritySync />

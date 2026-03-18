@@ -77,11 +77,25 @@ function Message({ message }) {
                 </div>
               )}
               {message.replyTo && (
-                <div className={`${itsMe ? 'bg-primary-focus/30 border-primary-content/50' : 'bg-base-200 border-primary'} border-l-2 p-2 rounded-lg mb-1.5 text-[10px] opacity-90 cursor-pointer transition-all max-w-full overflow-hidden`}>
-                  <p className="font-black opacity-60 truncate">
+                <div 
+                  className={`border-l-4 p-2 rounded-xl mb-2 text-[11px] cursor-pointer transition-all max-w-[95%] overflow-hidden shadow-sm ${
+                    itsMe 
+                      ? 'bg-white/15 border-white/40 text-primary-content font-medium' 
+                      : 'bg-base-300 border-primary text-base-content/80'
+                  }`}
+                  onClick={() => {
+                    const el = document.getElementById(message.replyTo._id);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                >
+                  <p className={`font-black text-[9px] uppercase tracking-wider mb-0.5 ${
+                    itsMe ? 'text-primary-content/80' : 'text-primary'
+                  }`}>
                     {message.replyTo.senderId === authUser.user._id ? "You" : "Them"}
                   </p>
-                  <p className="truncate italic">"{decryptedReply || "[Message Unreadable]"}"</p>
+                  <p className="truncate italic leading-tight whitespace-pre-wrap">
+                    "{decryptedReply || "[Message Unreadable]"}"
+                  </p>
                 </div>
               )}
               
