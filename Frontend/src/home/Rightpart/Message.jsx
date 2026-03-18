@@ -69,145 +69,143 @@ function Message({ message }) {
     <div id={message._id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className='group'>
         <div className={`chat ${chatName}`}>
-          <div className={`relative max-w-[90%] sm:max-w-[80%] ${itsMe ? 'ml-auto' : ''}`}>
-            <div className={`chat-bubble ${chatBubbleStyle} min-h-0 py-2.5 px-4 relative text-[14px] font-medium leading-relaxed w-fit max-w-full pb-7 pr-12 min-w-[80px]`}>
-              {selectedConversation?.isGroup && !itsMe && (
-                <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 opacity-80">
-                  {message.senderId?.fullname || "Unknown User"}
-                </div>
-              )}
-              {message.replyTo && (
-                <div 
-                  className={`border-l-4 p-2 rounded-xl mb-2 text-[11px] cursor-pointer transition-all min-w-[150px] max-w-[95%] overflow-hidden shadow-sm ${
-                    itsMe 
-                      ? 'bg-white/15 border-white/40 text-primary-content font-medium' 
-                      : 'bg-base-300 border-primary text-base-content/80'
-                  }`}
-                  onClick={() => {
-                    const el = document.getElementById(message.replyTo._id);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                >
-                  <p className={`font-black text-[9px] uppercase tracking-wider mb-0.5 ${
-                    itsMe ? 'text-primary-content/80' : 'text-primary'
-                  }`}>
-                    {message.replyTo.senderId === authUser.user._id ? "You" : "Them"}
-                  </p>
-                  <p className="italic leading-tight whitespace-pre-wrap">
-                    "{decryptedReply || "[Message Unreadable]"}"
-                  </p>
-                </div>
-              )}
-              
-              <div className="whitespace-pre-wrap break-words min-w-[20px]">
-                {decryptedContent}
-                {message.edited && (
-                  <span className="text-[9px] opacity-50 ml-2 font-black italic uppercase tracking-tighter">Edited</span>
-                )}
-              </div>
-
-              {/* Time and Status inside bubble */}
-              <div className={`absolute bottom-1 right-2 flex items-center gap-1.5 select-none ${itsMe ? 'opacity-70' : 'opacity-40'}`}>
-                <span className="text-[9px] font-black tracking-tighter">{formattedTime}</span>
-                {itsMe && (
-                  <div className="flex items-center translate-y-[0.5px]">
-                    {selectedConversation?.isGroup ? (
-                      <div className="relative group/seen">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setShowSeenBy(!showSeenBy); }}
-                          className="flex items-center transition-colors"
-                        >
-                          {message.seenBy?.length > 0 ? (
-                            <span className="flex items-center text-primary-content">
-                              <IoCheckmarkDoneOutline size={13} className="stroke-[3]" />
-                            </span>
-                          ) : (
-                            <IoCheckmarkOutline size={13} className="text-primary-content/60" />
-                          )}
-                        </button>
-                        {showSeenBy && message.seenBy?.length > 0 && (
-                          <div className="absolute bottom-full right-0 mb-2 w-36 bg-base-100 border border-base-300 rounded-2xl shadow-2xl p-3 z-50 animate-in slide-in-from-bottom-2 text-base-content">
-                            <p className="font-black text-[9px] uppercase opacity-40 mb-2 tracking-widest border-b border-base-200 pb-1">Seen by</p>
-                            <div className="flex flex-col gap-1.5">
-                               {message.seenBy.map((s, idx) => (
-                                 <p key={idx} className="text-[10px] font-bold truncate">
-                                   {s.userId?.fullname || (typeof s.userId === 'string' ? "Someone" : "Unknown")}
-                                 </p>
-                               ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      message.seen ? (
-                        <IoCheckmarkDoneOutline className={`${itsMe ? 'text-primary-content' : 'text-primary'} stroke-[3]`} size={13} />
-                      ) : (
-                        <IoCheckmarkOutline className="text-primary-content/60" size={13} />
-                      )
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {isStarred && (
-                <div className="absolute -top-1.5 -right-1.5 bg-warning text-warning-content p-1 rounded-full shadow-md scale-75 animate-in zoom-in">
-                   <FaStar size={10} />
-                </div>
-              )}
-
-              {/* Enhanced Quick Actions Bar */}
-              <div className={`absolute bottom-[-24px] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-[50] ${itsMe ? 'right-0' : 'left-0'}`}>
-                <div className="flex bg-base-200/80 backdrop-blur-md border border-base-300 rounded-xl p-0.5 shadow-xl glass">
-                  <button onClick={() => setReplyingTo(message)} className="p-1.5 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-primary transition-colors" title="Reply">
-                    <FaReply size={10} />
-                  </button>
-
-                  <div className="dropdown dropdown-top dropdown-end">
-                    <label tabIndex={0} className="p-1.5 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-primary cursor-pointer flex items-center">
-                      <MdOutlineAddReaction size={12} />
-                    </label>
-                    <div tabIndex={0} className="dropdown-content z-[1] menu p-1 shadow-2xl bg-base-100 rounded-2xl flex flex-row gap-0.5 mb-2 border border-base-200 animate-in slide-in-from-bottom-2">
-                      {reactionEmojis.map(emoji => (
-                        <button
-                          key={emoji}
-                          className="hover:bg-base-200 p-2 rounded-xl transition-transform hover:scale-125 duration-200"
-                          onClick={() => handleToggleReaction(emoji)}
-                        >
-                          <span className="text-base">{emoji}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button onClick={handleToggleStar} className={`p-1.5 hover:bg-base-300 rounded-lg transition-colors ${isStarred ? 'text-warning' : 'text-base-content/60 hover:text-warning'}`} title={isStarred ? "Unstar" : "Star"}>
-                    {isStarred ? <FaStar size={11} /> : <FaRegStar size={11} />}
-                  </button>
-
-                  {(itsMe || isAdmin) && (
-                    <button onClick={() => deleteMessage(message._id)} className="p-1.5 hover:bg-error/10 rounded-lg text-base-content/60 hover:text-error transition-colors" title="Delete">
-                      <FaTrash size={10} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Reactions Display - Modern Chips */}
-            {message.reactions?.length > 0 && (
-              <div className={`flex flex-wrap gap-1 mt-1.5 ${itsMe ? 'justify-end' : 'justify-start'}`}>
-                {Object.entries(reactionsGrouped).map(([emoji, count]) => (
-                  <div
-                    key={emoji}
-                    onClick={() => handleToggleReaction(emoji)}
-                    className="bg-base-100 border border-base-200 rounded-full px-2 py-0.5 text-[11px] cursor-pointer hover:bg-base-200 hover:scale-110 active:scale-95 transition-all flex items-center gap-1 shadow-sm font-black"
-                  >
-                    <span>{emoji}</span>
-                    {count > 1 && <span className="opacity-40 text-[9px]">{count}</span>}
-                  </div>
-                ))}
+          <div className={`chat-bubble ${chatBubbleStyle} relative min-h-0 py-3 px-4 text-[14px] font-medium leading-relaxed pb-8 pr-12 min-w-[100px] max-w-[90%] sm:max-w-[85%]`}>
+            {selectedConversation?.isGroup && !itsMe && (
+              <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-1 opacity-80">
+                {message.senderId?.fullname || "Unknown User"}
               </div>
             )}
+            {message.replyTo && (
+              <div 
+                className={`border-l-4 p-2 rounded-xl mb-2 text-[11px] cursor-pointer transition-all min-w-[150px] max-w-[95%] overflow-hidden shadow-sm ${
+                  itsMe 
+                    ? 'bg-white/15 border-white/40 text-primary-content font-medium' 
+                    : 'bg-base-300 border-primary text-base-content/80'
+                }`}
+                onClick={() => {
+                  const el = document.getElementById(message.replyTo._id);
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+              >
+                <p className={`font-black text-[9px] uppercase tracking-wider mb-0.5 ${
+                  itsMe ? 'text-primary-content/80' : 'text-primary'
+                }`}>
+                  {message.replyTo.senderId === authUser.user._id ? "You" : "Them"}
+                </p>
+                <p className="italic leading-tight whitespace-pre-wrap">
+                  "{decryptedReply || "[Message Unreadable]"}"
+                </p>
+              </div>
+            )}
+            
+            <div className="whitespace-pre-wrap break-words">
+              {decryptedContent}
+              {message.edited && (
+                <span className="text-[9px] opacity-50 ml-2 font-black italic uppercase tracking-tighter">Edited</span>
+              )}
+            </div>
+
+            {/* Time and Status inside bubble */}
+            <div className={`absolute bottom-1.5 right-2.5 flex items-center gap-1.5 select-none ${itsMe ? 'opacity-70' : 'opacity-40'}`}>
+              <span className="text-[9px] font-black tracking-tighter">{formattedTime}</span>
+              {itsMe && (
+                <div className="flex items-center translate-y-[0.5px]">
+                  {selectedConversation?.isGroup ? (
+                    <div className="relative group/seen">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowSeenBy(!showSeenBy); }}
+                        className="flex items-center transition-colors"
+                      >
+                        {message.seenBy?.length > 0 ? (
+                          <span className="flex items-center text-primary-content">
+                            <IoCheckmarkDoneOutline size={13} className="stroke-[3]" />
+                          </span>
+                        ) : (
+                          <IoCheckmarkOutline size={13} className="text-primary-content/60" />
+                        )}
+                      </button>
+                      {showSeenBy && message.seenBy?.length > 0 && (
+                        <div className="absolute bottom-full right-0 mb-2 w-36 bg-base-100 border border-base-300 rounded-2xl shadow-2xl p-3 z-50 animate-in slide-in-from-bottom-2 text-base-content">
+                          <p className="font-black text-[9px] uppercase opacity-40 mb-2 tracking-widest border-b border-base-200 pb-1">Seen by</p>
+                          <div className="flex flex-col gap-1.5">
+                              {message.seenBy.map((s, idx) => (
+                                <p key={idx} className="text-[10px] font-bold truncate">
+                                  {s.userId?.fullname || (typeof s.userId === 'string' ? "Someone" : "Unknown")}
+                                </p>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    message.seen ? (
+                      <IoCheckmarkDoneOutline className={`${itsMe ? 'text-primary-content' : 'text-primary'} stroke-[3]`} size={13} />
+                    ) : (
+                      <IoCheckmarkOutline className="text-primary-content/60" size={13} />
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+
+            {isStarred && (
+              <div className="absolute -top-1.5 -right-1.5 bg-warning text-warning-content p-1 rounded-full shadow-md scale-75 animate-in zoom-in">
+                  <FaStar size={10} />
+              </div>
+            )}
+
+            {/* Enhanced Quick Actions Bar */}
+            <div className={`absolute bottom-[-26px] flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-[50] ${itsMe ? 'right-0' : 'left-0'}`}>
+              <div className="flex bg-base-200/80 backdrop-blur-md border border-base-300 rounded-xl p-0.5 shadow-xl glass">
+                <button onClick={() => setReplyingTo(message)} className="p-1.5 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-primary transition-colors" title="Reply">
+                  <FaReply size={10} />
+                </button>
+
+                <div className="dropdown dropdown-top dropdown-end">
+                  <label tabIndex={0} className="p-1.5 hover:bg-base-300 rounded-lg text-base-content/60 hover:text-primary cursor-pointer flex items-center">
+                    <MdOutlineAddReaction size={12} />
+                  </label>
+                  <div tabIndex={0} className="dropdown-content z-[1] menu p-1 shadow-2xl bg-base-100 rounded-2xl flex flex-row gap-0.5 mb-2 border border-base-200 animate-in slide-in-from-bottom-2">
+                    {reactionEmojis.map(emoji => (
+                      <button
+                        key={emoji}
+                        className="hover:bg-base-200 p-2 rounded-xl transition-transform hover:scale-125 duration-200"
+                        onClick={() => handleToggleReaction(emoji)}
+                      >
+                        <span className="text-base">{emoji}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button onClick={handleToggleStar} className={`p-1.5 hover:bg-base-300 rounded-lg transition-colors ${isStarred ? 'text-warning' : 'text-base-content/60 hover:text-warning'}`} title={isStarred ? "Unstar" : "Star"}>
+                  {isStarred ? <FaStar size={11} /> : <FaRegStar size={11} />}
+                </button>
+
+                {(itsMe || isAdmin) && (
+                  <button onClick={() => deleteMessage(message._id)} className="p-1.5 hover:bg-error/10 rounded-lg text-base-content/60 hover:text-error transition-colors" title="Delete">
+                    <FaTrash size={10} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
+
+          {/* Reactions Display - using chat-footer for alignment */}
+          {message.reactions?.length > 0 && (
+            <div className={`chat-footer flex flex-wrap gap-1 mt-1 ${itsMe ? 'justify-end' : 'justify-start'}`}>
+              {Object.entries(reactionsGrouped).map(([emoji, count]) => (
+                <div
+                  key={emoji}
+                  onClick={() => handleToggleReaction(emoji)}
+                  className="bg-base-100 border border-base-200 rounded-full px-2 py-0.5 text-[11px] cursor-pointer hover:bg-base-200 hover:scale-110 active:scale-95 transition-all flex items-center gap-1 shadow-sm font-black"
+                >
+                  <span>{emoji}</span>
+                  {count > 1 && <span className="opacity-40 text-[9px]">{count}</span>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       {showForward && <ForwardModal message={message} onClose={() => setShowForward(false)} />}
