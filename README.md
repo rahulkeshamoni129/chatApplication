@@ -2,8 +2,6 @@
 
 **Echo Chat** is a modern, high-performance messaging platform built with the MERN stack. It prioritizes user privacy through **End-to-End Encryption (E2EE)** while maintaining a seamless, real-time user experience.
 
-![Chat Application Mockup](https://api.dicebear.com/7.x/shapes/svg?seed=echo-chat)
-
 ## ✨ Features
 
 ### 🔒 Privacy & Security (E2EE)
