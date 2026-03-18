@@ -14,6 +14,8 @@ import AdminDashboard from "./components/AdminDashboard";
 import SecuritySync from "./components/SecuritySync";
 import useTheme from "./zustand/useTheme";
 
+import axios from "axios";
+
 function App() {
   const [authUser, setAuthUser] = useAuth();
   const { setPinnedChats } = useConversation();
@@ -22,6 +24,21 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
+
+  // Global Axios Interceptor for 401 Unauthorized
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem("chatApp");
+          setAuthUser(null);
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, [setAuthUser]);
 
   useEffect(() => {
     if (authUser?.user?.pinnedChats) {

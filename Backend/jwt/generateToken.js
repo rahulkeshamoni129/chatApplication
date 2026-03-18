@@ -7,7 +7,8 @@ export const createTokenAndSaveCookie=(userId,res)=>{
         httpOnly: true,
         secure: process.env.NODE_ENV === "production", // Enable secure in production (HTTPS)
         sameSite: "lax", // Lax is generally more compatible for same-site cross-modal/cross-origin needs
-        path: '/'
+        path: '/',
+        maxAge: 10 * 24 * 60 * 60 * 1000 // 10 days in milliseconds
     })
 
 };

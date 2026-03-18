@@ -30,6 +30,7 @@ function userGetAllUsers() {
                 setLoading(false);
             } catch (error) {
                 console.log("Error in useGetAllUsers " + error);
+                setLoading(false);
             }
         }
         getUsers()
