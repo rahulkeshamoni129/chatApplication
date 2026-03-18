@@ -18,7 +18,7 @@ export const sendMessage = async (req, res) => {
             ]
         });
 
-        if (conversation && conversation.isGroup && !conversation.members.includes(senderId)) {
+        if (conversation && conversation.isGroup && !conversation.members.some(m => m.toString() === senderId.toString())) {
             return res.status(403).json({ error: "You are not a member of this group" });
         }
 

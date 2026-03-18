@@ -40,6 +40,21 @@ function GroupSettings({ group, onClose, onUpdate }) {
         }
     };
 
+    const handleDeleteGroup = async () => {
+        if (!window.confirm("Are you SURE you want to permanently delete this group? This action cannot be undone.")) return;
+
+        try {
+            setLoading(true);
+            const res = await axios.delete(`/api/users/delete-group/${group._id}`);
+            toast.success(res.data.message);
+            onClose();
+            window.location.reload(); // Refresh the list
+        } catch (error) {
+            toast.error(error.response?.data?.error || "Failed to delete group");
+            setLoading(false);
+        }
+    };
+
     // Filter users who are NOT in the group
     const potentialNewMembers = allUsers.filter(user => !group.members.includes(user._id));
 
@@ -108,6 +123,23 @@ function GroupSettings({ group, onClose, onUpdate }) {
                                     )}
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Admin Actions */}
+                    {isAdmin && !showAddMember && (
+                        <div className="mt-8 pt-5 border-t border-base-200 animate-in slide-in-from-bottom-2 duration-300">
+                            <button 
+                                onClick={handleDeleteGroup}
+                                disabled={loading}
+                                className="group btn btn-error btn-outline w-full rounded-2xl gap-3 font-black uppercase tracking-widest text-[10px] h-14 hover:bg-error hover:text-white transition-all duration-300 shadow-lg shadow-error/10"
+                            >
+                                <IoTrashOutline size={20} className="group-hover:scale-110 transition-transform" />
+                                {loading ? "Processing..." : "Delete Group Permanently"}
+                            </button>
+                            <p className="text-[10px] text-center mt-3 opacity-40 font-bold uppercase tracking-widest px-4 leading-relaxed">
+                                This will remove all members and delete all chat history permanently.
+                            </p>
                         </div>
                     )}
                 </div>

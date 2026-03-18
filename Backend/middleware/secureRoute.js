@@ -5,9 +5,15 @@ import SystemConfig from "../models/systemConfig.model.js";
 
 const secureRoute = async (req, res, next) => {
   try {
-    const token = req.cookies.jwt;
-    if (!token) {
-      return res.status(401).json({ error: "No token,Authorisation denied" })
+    let token = req.cookies.jwt;
+    
+    // Check for Authorization header if cookie is not present
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+        token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token || token === "undefined") {
+      return res.status(401).json({ error: "No token, authorization denied" })
     }
     const decoded = jwt.verify(token, process.env.JWT_TOKEN);
     if (!decoded) {

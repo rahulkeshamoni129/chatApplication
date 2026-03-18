@@ -2,8 +2,8 @@ import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import Log from "../models/log.model.js";
-import SystemConfig from "../models/systemConfig.model.js";
 import mongoose from "mongoose";
+import SystemConfig from "../models/systemConfig.model.js";
 import bcrypt from "bcryptjs";
 import { createTokenAndSaveCookie } from "../jwt/generateToken.js";
 
@@ -304,6 +304,8 @@ export const allGroups = async (req, res) => {
             return {
                 ...group,
                 _id: group._id.toString(),
+                fullname: group.groupName || "Unnamed Group", // Crucial for frontend display
+                isGroup: true,
                 unreadCount: count,
                 lastMessageAt: lastMsg?.createdAt || group.updatedAt || null
             };
@@ -362,6 +364,35 @@ export const removeGroupMember = async (req, res) => {
         res.status(200).json({ message: "Member removed successfully", group });
     } catch (error) {
         console.log("Error in removeGroupMember: ", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+export const deleteGroup = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const userId = req.user._id;
+
+        const group = await Conversation.findById(groupId);
+        if (!group || !group.isGroup) return res.status(404).json({ error: "Group not found" });
+
+        // Only group admin or system admin can delete
+        const isGroupAdmin = group.groupAdmin.toString() === userId.toString();
+        const isSystemAdmin = req.user.isAdmin;
+
+        if (!isGroupAdmin && !isSystemAdmin) {
+            return res.status(403).json({ error: "Only group admin or system admin can delete the group" });
+        }
+
+        // Delete all messages associated with this group
+        await Message.deleteMany({ receiverId: groupId });
+
+        // Delete the conversation
+        await Conversation.findByIdAndDelete(groupId);
+
+        res.status(200).json({ message: "Group deleted permanently" });
+    } catch (error) {
+        console.log("Error in deleteGroup: ", error);
         res.status(500).json({ error: "Internal server error" });
     }
 };

@@ -3,18 +3,41 @@ import path from "path";
 import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
-import userRoute from './routes/user.route.js'; // ⚠️ include `.js` extension if using ESM
+import userRoute from './routes/user.route.js';
 import messageRoute from './routes/message.route.js'; 
 import cors from 'cors'
 import cookieParser from 'cookie-parser';
 import { app, server } from './SockedIo/server.js';
 dotenv.config();
 
-
-//middleware
+// middleware
 app.use(express.json());
-app.use(cookieParser())
-app.use(cors())
+app.use(cookieParser());
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:4000",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:4000",
+  "http://127.0.0.1:3000",
+  "https://chatapplication-jpcf.onrender.com"
+];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow all in dev OR if no origin (backend calls itself / server-to-server)
+    if (!origin || process.env.NODE_ENV !== "production") return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      var msg = 'The CORS policy for this site does not allow access from the specified Origin: ' + origin;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+}));
+
 const PORT = process.env.PORT || 4000;
 const URI = process.env.MONGODB_URI;
 

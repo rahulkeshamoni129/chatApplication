@@ -3,7 +3,7 @@ import {
     allUsers, login, logout, signup, updateProfile, changePassword, 
     togglePinChat, createGroup, allGroups, toggleBlockUser, blockUser, 
     addGroupMember, removeGroupMember, getLogs, getSystemConfig, 
-    toggleMaintenance, updatePublicKey, getUserById 
+    toggleMaintenance, updatePublicKey, getUserById, deleteGroup 
 } from "../controller/user.controller.js";
 import secureRoute from "../middleware/secureRoute.js";
 const router = express.Router();
@@ -11,8 +11,8 @@ router.post("/signup", signup)
 router.post("/login", login)
 router.post("/logout", logout);
 router.get("/allusers", secureRoute, allUsers);
-router.get("/:id", secureRoute, getUserById);
 router.get("/allgroups", secureRoute, allGroups);
+router.get("/:id", secureRoute, getUserById);
 router.put("/update-public-key", secureRoute, updatePublicKey);
 
 // Management Routes
@@ -22,6 +22,7 @@ router.put("/pin-chat", secureRoute, togglePinChat);
 router.post("/create-group", secureRoute, createGroup);
 router.put("/add-member", secureRoute, addGroupMember);
 router.put("/remove-member", secureRoute, removeGroupMember);
+router.delete("/delete-group/:groupId", secureRoute, deleteGroup);
 router.put("/toggle-block/:id", secureRoute, toggleBlockUser);
 router.put("/block/:id", secureRoute, blockUser);
 
