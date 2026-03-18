@@ -5,7 +5,7 @@ import { decryptMessage } from '../utils/cryptoUtils.js'
 
 const useGetMessage=() =>{
     const [loading,setLoading]=useState(false)
-    const {messages,setMessage,selectedConversation}=useConversation()
+    const {messages,setMessage,selectedConversation, lastSecurityUpdate}=useConversation()
     useEffect(()=>{
         const getMessages=async()=>{
             setLoading(true);
@@ -48,7 +48,7 @@ const useGetMessage=() =>{
             }
         };
         getMessages();
-    },[selectedConversation,setMessage])
+    },[selectedConversation,setMessage, lastSecurityUpdate])
   return {loading,messages}
 }
 

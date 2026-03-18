@@ -5,11 +5,17 @@ import useConversation from "../../zustand/useConversation";
 import toast from "react-hot-toast";
 function Search() {
   const { setSelectedConversation, clearUnreads, sidebarSearch, setSidebarSearch } = useConversation();
-  const [allUsers] = userGetAllUsers();
+  const [allUsers, loadingUsers, getUsers] = userGetAllUsers();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!sidebarSearch) return;
+
+    // Optional: if list is empty, try one quick re-fetch
+    if (allUsers.length === 0 && !loadingUsers) {
+        await getUsers();
+    }
+
     const conversation = allUsers.find((user) =>
       user.fullname?.toLowerCase().includes(sidebarSearch.toLowerCase())
     );
@@ -18,7 +24,7 @@ function Search() {
       clearUnreads(conversation._id);
       setSidebarSearch("");
     }
-    else {
+    else if (!loadingUsers) {
       toast.error("User not found");
     }
   };

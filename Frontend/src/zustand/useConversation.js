@@ -53,5 +53,9 @@ const useConversation = create((set) => ({
   seedLastMessageAt: (convId, timestamp) => set((state) => ({
     lastMessageAt: { ...state.lastMessageAt, [convId]: new Date(timestamp).getTime() }
   })),
+
+  // Global trigger for components to refresh data after security sync
+  lastSecurityUpdate: 0,
+  updateSecurityUpdate: () => set({ lastSecurityUpdate: Date.now() }),
 }))
 export default useConversation

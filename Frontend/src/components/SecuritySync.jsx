@@ -4,9 +4,11 @@ import { generateE2EEKeys, protectPrivateKey, unprotectPrivateKey } from '../uti
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { IoShieldCheckmarkOutline, IoSyncOutline, IoKeyOutline } from 'react-icons/io5';
+import useConversation from '../zustand/useConversation';
 
 const SecuritySync = () => {
     const [authUser, setAuthUser] = useAuth();
+    const { updateSecurityUpdate } = useConversation();
     const [showModal, setShowModal] = useState(false);
     const [modalType, setModalType] = useState('SETUP'); // SETUP or SYNC
     const [pin, setPin] = useState('');
@@ -73,6 +75,7 @@ const SecuritySync = () => {
                     throw new Error("Incorrect Security PIN. Verification failed.");
                 }
             }
+            updateSecurityUpdate(); // REFRESH DATA GLOBAL
             setShowModal(false);
         } catch (error) {
             toast.error(error.message || "Security sync failed");
